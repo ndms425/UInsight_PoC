@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>연관메인화면 선택</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+</head>
+<body>
+  <div id="root"></div>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel" data-presets="react">
+    const { useState } = React;
+
+    function App() {
+      const [selectedMainScreen, setSelectedMainScreen] = useState('');
+      const [isProcessing, setIsProcessing] = useState(false);
+
+      // URL 파라미터에서 대상 화면 정보 가져오기
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetParam = urlParams.get('target');
+      const targetScreen = targetParam ? JSON.parse(decodeURIComponent(targetParam)) : {
+        id: 'PA-01-04-01',
+        name: '[관리자>프로젝트관리]',
+        type: 'Sub',
+        url: '/admin/exam/view/009'
+      };
+
+      // 연결된 메인화면 목록
+      const linkedMainScreens = [
+        {
+          id: 'PA-01-01',
+          name: '시스템메인',
+          type: 'Main',
+          url: '/admin/exam/view/010',
+          description: '전체 시스템의 메인 대시보드',
+          accessPath: ['설정', '대시보드'],
+          isRecommended: true,
+          reason: '최근 사용'
+        },
+        {
+          id: 'PA-01-02',
+          name: '관리자 메인',
+          type: 'Main', 
+          url: '/admin/main',
+          description: '관리자 전용 메인화면',
+          accessPath: ['관리자', '메인'],
+          isRecommended: false,
+          reason: ''
+        },
+        {
+          id: 'PA-01-03',
+          name: '프로젝트 포털',
+          type: 'Main',
+          url: '/admin/project/portal',
+          description: '프로젝트 관리 전용 포털',
+          accessPath: ['프로젝트', '포털'],
+          isRecommended: true,
+          reason: '연관성 높음'
+        }
+      ];
+
+      const handleMainScreenSelect = (screenId) => {
+        setSelectedMainScreen(screenId);
+      };
+
+      const handleStartInspection = () => {
+        if (!selectedMainScreen) {
+          alert('메인화면을 선택해주세요.');
+          return;
+        }
+
+        setIsProcessing(true);
+        
+        // 실제로는 Chromium 실행 로직이 들어갈 부분
+        const selectedMain = linkedMainScreens.find(screen => screen.id === selectedMainScreen);
+        console.log('점검 시작:', {
+          메인화면: selectedMain,
+          대상화면: targetScreen
+        });
+
+        setTimeout(() => {
+          setIsProcessing(false);
+          alert(`${selectedMain.name}을 먼저 열고 ${targetScreen.name} 화면으로 진입합니다.`);
+          
+          // 팝업 창인 경우 창을 닫고, 일반 페이지인 경우 메인으로 이동
+          if (window.opener) {
+            window.close();
+          } else {
+            window.location.href = 'index.html';
+          }
+        }, 2000);
+      };
+
+      const getTypeIcon = (type) => {
+        switch(type) {
+          case 'Main': return <i className="fas fa-home text-blue-500"></i>;
+          case 'Sub': return <i className="fas fa-window-restore text-purple-500"></i>;
+          case 'Popup': return <i className="fas fa-external-link-alt text-green-500"></i>;
+          default: return <i className="fas fa-file text-gray-500"></i>;
+        }
+      };
+
+      const getTypeBadge = (type) => {
+        switch(type) {
+          case 'Main': return 'bg-blue-100 text-blue-800';
+          case 'Sub': return 'bg-purple-100 text-purple-800';
+          case 'Popup': return 'bg-green-100 text-green-800';
+          default: return 'bg-gray-100 text-gray-800';
+        }
+      };
+
+      if (isProcessing) {
+        return (
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+            <div className="bg-white rounded-lg shadow-lg p-8 max-w-md mx-auto text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i className="fas fa-cog fa-spin text-2xl text-blue-600"></i>
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">점검 준비 중</h2>
+              <p className="text-gray-600 mb-4">
+                Chromium 실행 및 화면 진입을 준비하고 있습니다.
+              </p>
+              <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+              <p className="text-sm text-gray-500 mt-2">잠시만 기다려주세요...</p>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen bg-gray-50 p-6">
+          <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h1 className="text-xl font-medium">연관메인화면 선택</h1>
+                <button 
+                  onClick={() => {
+                    if (window.opener) {
+                      window.close();
+                    } else {
+                      window.location.href = 'index.html';
+                    }
+                  }}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  <i className="fas fa-times mr-2"></i>
+                  닫기
+                </button>
+              </div>
+
+              {/* 대상 화면 정보 */}
+              <div className="mb-8">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-center mb-3">
+                    <i className="fas fa-target text-blue-600 mr-2"></i>
+                    <h3 className="text-lg font-medium text-blue-800">점검 대상 화면</h3>
+                  </div>
+                  <div className="flex items-center p-3 bg-white rounded border border-blue-200">
+                    {getTypeIcon(targetScreen.type)}
+                    <div className="ml-3 flex-1">
+                      <div className="flex items-center">
+                        <span className="font-medium text-gray-900 mr-3">{targetScreen.name}</span>
+                        <span className={`px-2 py-1 text-xs rounded-full ${getTypeBadge(targetScreen.type)}`}>
+                          {targetScreen.type}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">{targetScreen.url}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                    <p className="text-sm text-yellow-800">
+                      <i className="fas fa-info-circle mr-1"></i>
+                      이 서브화면을 점검하려면 먼저 메인화면을 열어야 합니다. 아래에서 연결할 메인화면을 선택해주세요.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 메인화면 선택 */}
+              <div className="mb-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-3">
+                  연결할 메인화면을 선택하세요
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  선택된 메인화면을 먼저 열고, 해당 메인에서 대상 화면으로 자동 진입합니다.
+                </p>
+
+                {/* 추천 메인화면 */}
+                <div className="mb-6">
+                  <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                    <i className="fas fa-star text-yellow-500 mr-2"></i>
+                    추천 메인화면
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {linkedMainScreens.filter(screen => screen.isRecommended).map(screen => (
+                      <div 
+                        key={screen.id}
+                        className={`border-2 rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+                          selectedMainScreen === screen.id
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-yellow-200 bg-yellow-50 hover:border-yellow-300'
+                        }`}
+                        onClick={() => handleMainScreenSelect(screen.id)}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center">
+                            {getTypeIcon(screen.type)}
+                            <span className="ml-2 font-medium text-gray-900">{screen.name}</span>
+                          </div>
+                          <input
+                            type="radio"
+                            name="mainScreen"
+                            checked={selectedMainScreen === screen.id}
+                            onChange={() => handleMainScreenSelect(screen.id)}
+                            className="w-4 h-4 text-blue-600"
+                          />
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{screen.description}</p>
+                        <div className="flex justify-between items-center">
+                          <span className={`px-2 py-1 text-xs rounded-full ${getTypeBadge(screen.type)}`}>
+                            {screen.type}
+                          </span>
+                          <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
+                            {screen.reason}
+                          </span>
+                        </div>
+                        <div className="mt-2 text-xs text-gray-500">
+                          <i className="fas fa-route mr-1"></i>
+                          {screen.accessPath.join(' > ')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 기타 메인화면 */}
+                <div className="mb-6">
+                  <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                    <i className="fas fa-list text-gray-500 mr-2"></i>
+                    기타 메인화면
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {linkedMainScreens.filter(screen => !screen.isRecommended).map(screen => (
+                      <div 
+                        key={screen.id}
+                        className={`border-2 rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+                          selectedMainScreen === screen.id
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => handleMainScreenSelect(screen.id)}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center">
+                            {getTypeIcon(screen.type)}
+                            <span className="ml-2 font-medium text-gray-900">{screen.name}</span>
+                          </div>
+                          <input
+                            type="radio"
+                            name="mainScreen"
+                            checked={selectedMainScreen === screen.id}
+                            onChange={() => handleMainScreenSelect(screen.id)}
+                            className="w-4 h-4 text-blue-600"
+                          />
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{screen.description}</p>
+                        <div className="flex justify-between items-center">
+                          <span className={`px-2 py-1 text-xs rounded-full ${getTypeBadge(screen.type)}`}>
+                            {screen.type}
+                          </span>
+                        </div>
+                        <div className="mt-2 text-xs text-gray-500">
+                          <i className="fas fa-route mr-1"></i>
+                          {screen.accessPath.join(' > ')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* 액션 버튼 */}
+              <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    if (window.opener) {
+                      window.close();
+                    } else {
+                      window.location.href = 'index.html';
+                    }
+                  }}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  <i className="fas fa-arrow-left mr-2"></i>
+                  취소
+                </button>
+                
+                <button
+                  onClick={handleStartInspection}
+                  disabled={!selectedMainScreen}
+                  className={`px-6 py-2 rounded-md font-medium ${
+                    selectedMainScreen
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  <i className="fas fa-play mr-2"></i>
+                  점검 시작
+                </button>
+              </div>
+
+              {/* 선택된 화면 정보 */}
+              {selectedMainScreen && (
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
+                  <p className="text-sm text-green-800">
+                    <i className="fas fa-check-circle mr-1"></i>
+                    <strong>{linkedMainScreens.find(s => s.id === selectedMainScreen)?.name}</strong>을 통해 
+                    <strong> {targetScreen.name}</strong> 화면으로 진입합니다.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html> 

@@ -1,0 +1,85 @@
+{
+  "name": "uinsight-desktop",
+  "version": "1.0.0",
+  "description": "UInsight 화면 점검 관리 시스템 - Desktop App",
+  "main": "main.js",
+  "homepage": ".",
+  "scripts": {
+    "start": "electron .",
+    "dev": "NODE_ENV=development electron .",
+    "build": "electron-builder",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --publish=never",
+    "package": "electron-packager . UInsight --platform=win32 --arch=x64 --out=release --overwrite",
+    "installer": "makensis installer.nsi",
+    "release": "npm run package && npm run installer",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "uinsight",
+    "screen-inspection",
+    "management",
+    "desktop-app"
+  ],
+  "author": "UInsight Team",
+  "license": "MIT",
+  "dependencies": {
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.6",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "electron": "^36.4.0",
+    "electron-builder": "^26.0.12",
+    "electron-packager": "^17.1.2",
+    "postcss": "^8.5.4",
+    "tailwindcss": "^4.1.8"
+  },
+  "build": {
+    "appId": "com.uinsight.desktop",
+    "productName": "UInsight",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "*.html",
+      "*.css",
+      "*.js",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "requestedExecutionLevel": "asInvoker",
+      "forceCodeSigning": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "UInsight"
+    },
+    "portable": {
+      "artifactName": "UInsight-Portable-${version}.exe"
+    }
+  }
+}
