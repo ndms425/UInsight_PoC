@@ -1,0 +1,32 @@
+appId: com.uinsight.app
+productName: UInsight
+directories:
+  output: dist
+compression: maximum
+files:
+  - "**/*"
+  - "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}"
+  - "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}"
+  - "!**/node_modules/*.d.ts"
+  - "!**/node_modules/.bin"
+  - "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}"
+  - "!.editorconfig"
+  - "!**/._*"
+  - "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}"
+  - "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}"
+  - "!**/{appveyor.yml,.travis.yml,circle.yml}"
+  - "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+  - "!dist/**/*"
+  - "!release/**/*"
+  - "!*.zip"
+  - "!tailwindcss.exe"
+  - "!UInsight-Portable-*.zip"
+win:
+  target: 
+    - target: portable
+      arch: [x64]
+  artifactName: "${productName}-Portable-${version}.${ext}"
+  requestedExecutionLevel: asInvoker
+  forceCodeSigning: false
+portable:
+  artifactName: "${productName}-Portable-${version}.${ext}" 
