@@ -89,6 +89,10 @@
                 defectCountMin: '',
                 defectCountMax: ''
             });
+            
+            // 활성화된 필터 항목들
+            const [activeFilters, setActiveFilters] = useState([]);
+            const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
             // 필터 핸들러
             const handleFilterChange = (key, value) => {
@@ -109,8 +113,29 @@
                     defectCountMin: '',
                     defectCountMax: ''
                 });
+                setActiveFilters([]);
                 setCurrentPage(1);
             };
+            
+            // 필터 항목 추가/제거
+            const toggleFilter = (filterKey) => {
+                setActiveFilters(prev => 
+                    prev.includes(filterKey) 
+                        ? prev.filter(f => f !== filterKey)
+                        : [...prev, filterKey]
+                );
+                setShowFilterDropdown(false);
+            };
+            
+
+            
+            // 필터 옵션 정의
+            const filterOptions = [
+                { key: 'screenId', label: '화면ID' },
+                { key: 'round', label: '회차' },
+                { key: 'dateRange', label: '실행일시' },
+                { key: 'defectCount', label: '결함수' }
+            ];
 
             // 데이터 필터링
             const filteredData = inspectionData.filter(item => {
@@ -154,6 +179,20 @@
             const indexOfFirstItem = indexOfLastItem - itemsPerPage;
             const currentItems = sortedData.slice(indexOfFirstItem, indexOfLastItem);
             const totalPages = Math.ceil(sortedData.length / itemsPerPage);
+            
+            // 외부 클릭시 드롭다운 닫기
+            useEffect(() => {
+                const handleClickOutside = (event) => {
+                    if (!event.target.closest('.filter-dropdown')) {
+                        setShowFilterDropdown(false);
+                    }
+                };
+                
+                if (showFilterDropdown) {
+                    document.addEventListener('click', handleClickOutside);
+                    return () => document.removeEventListener('click', handleClickOutside);
+                }
+            }, [showFilterDropdown]);
 
             return (
                 <div className="min-h-screen bg-gray-50">
@@ -177,100 +216,146 @@
 
                     {/* 메인 컨텐츠 */}
                     <div className="p-6">
-                        <h1 className="text-xl font-medium mb-6">점검현황_회차</h1>
+                        <div className="mb-6">
+                            <h1 className="text-2xl font-bold mb-2">점검현황_회차</h1>
+                        </div>
                         <div className="bg-white rounded-lg shadow overflow-hidden">
                             {/* 필터링 섹션 */}
                             <div className="p-6 border-b border-gray-200 bg-gray-50">
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-medium text-gray-900">필터링</h3>
-                                    <button
-                                        onClick={resetFilters}
-                                        className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-100"
-                                    >
-                                        <i className="fas fa-undo mr-1"></i>
-                                        초기화
-                                    </button>
+                                    <div className="flex items-center space-x-2">
+                                        {/* 필터 항목 추가 버튼 */}
+                                        <div className="relative filter-dropdown">
+                                            <button
+                                                onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                                                className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 border border-blue-300 rounded-md hover:bg-blue-50"
+                                            >
+                                                <i className="fas fa-plus mr-1"></i>
+                                                필터 항목 추가
+                                            </button>
+                                            
+                                            {/* 필터 드롭다운 */}
+                                            {showFilterDropdown && (
+                                                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                                                    <div className="py-1">
+                                                        {filterOptions.map((option) => (
+                                                            <button
+                                                                key={option.key}
+                                                                onClick={() => toggleFilter(option.key)}
+                                                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                                                                    activeFilters.includes(option.key) ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
+                                                                }`}
+                                                            >
+                                                                <i className={`fas ${activeFilters.includes(option.key) ? 'fa-check' : 'fa-plus'} mr-2`}></i>
+                                                                {option.label}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <button
+                                            onClick={resetFilters}
+                                            className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-100"
+                                        >
+                                            <i className="fas fa-undo mr-1"></i>
+                                            초기화
+                                        </button>
+                                    </div>
                                 </div>
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {/* 화면ID 검색 */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">화면ID</label>
-                                        <input
-                                            type="text"
-                                            value={filters.screenId}
-                                            onChange={(e) => handleFilterChange('screenId', e.target.value)}
-                                            placeholder="화면ID 검색..."
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        />
+                                {/* 활성화된 필터들만 표시 */}
+                                {activeFilters.length > 0 && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                                        {/* 화면ID 검색 */}
+                                        {activeFilters.includes('screenId') && (
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">화면ID</label>
+                                                <input
+                                                    type="text"
+                                                    value={filters.screenId}
+                                                    onChange={(e) => handleFilterChange('screenId', e.target.value)}
+                                                    placeholder="화면ID 검색..."
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                />
+                                            </div>
+                                        )}
+                                        
+                                        {/* 회차 선택 */}
+                                        {activeFilters.includes('round') && (
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">회차</label>
+                                                <select
+                                                    value={filters.round}
+                                                    onChange={(e) => handleFilterChange('round', e.target.value)}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                >
+                                                    <option value="">전체</option>
+                                                    <option value="1">1회차</option>
+                                                    <option value="2">2회차</option>
+                                                    <option value="3">3회차</option>
+                                                </select>
+                                            </div>
+                                        )}
+                                        
+                                        {/* 수행일시 범위 */}
+                                        {activeFilters.includes('dateRange') && (
+                                            <>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">수행일시 (시작)</label>
+                                                    <input
+                                                        type="date"
+                                                        value={filters.dateFrom}
+                                                        onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">수행일시 (종료)</label>
+                                                    <input
+                                                        type="date"
+                                                        value={filters.dateTo}
+                                                        onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    />
+                                                </div>
+                                            </>
+                                        )}
+                                        
+                                        {/* 결함수 범위 */}
+                                        {activeFilters.includes('defectCount') && (
+                                            <>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">결함수 (최소)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={filters.defectCountMin}
+                                                        onChange={(e) => handleFilterChange('defectCountMin', e.target.value)}
+                                                        placeholder="최소값"
+                                                        min="0"
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">결함수 (최대)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={filters.defectCountMax}
+                                                        onChange={(e) => handleFilterChange('defectCountMax', e.target.value)}
+                                                        placeholder="최대값"
+                                                        min="0"
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    />
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
-                                    
-                                    {/* 회차 선택 */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">회차</label>
-                                        <select
-                                            value={filters.round}
-                                            onChange={(e) => handleFilterChange('round', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        >
-                                            <option value="">전체</option>
-                                            <option value="1">1회차</option>
-                                            <option value="2">2회차</option>
-                                            <option value="3">3회차</option>
-                                        </select>
-                                    </div>
-                                    
-                                    {/* 수행일시 시작 */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">수행일시 (시작)</label>
-                                        <input
-                                            type="date"
-                                            value={filters.dateFrom}
-                                            onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        />
-                                    </div>
-                                    
-                                    {/* 수행일시 종료 */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">수행일시 (종료)</label>
-                                        <input
-                                            type="date"
-                                            value={filters.dateTo}
-                                            onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        />
-                                    </div>
-                                    
-                                    {/* 결함수 최소 */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">결함수 (최소)</label>
-                                        <input
-                                            type="number"
-                                            value={filters.defectCountMin}
-                                            onChange={(e) => handleFilterChange('defectCountMin', e.target.value)}
-                                            placeholder="최소값"
-                                            min="0"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        />
-                                    </div>
-                                    
-                                    {/* 결함수 최대 */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">결함수 (최대)</label>
-                                        <input
-                                            type="number"
-                                            value={filters.defectCountMax}
-                                            onChange={(e) => handleFilterChange('defectCountMax', e.target.value)}
-                                            placeholder="최대값"
-                                            min="0"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        />
-                                    </div>
-                                </div>
+                                )}
                                 
                                 {/* 필터 결과 요약 */}
-                                <div className="mt-4 text-sm text-gray-600">
+                                <div className="text-sm text-gray-600">
                                     총 <span className="font-medium text-blue-600">{sortedData.length}</span>개 항목이 검색되었습니다.
                                 </div>
                             </div>
