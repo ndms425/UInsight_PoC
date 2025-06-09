@@ -22,7 +22,7 @@
         <div className="min-h-screen bg-gray-50 p-6">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">UInsight</h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <button
                 onClick={() => navigateToScreen('점검대상화면관리.html')}
                 className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col items-center justify-center space-y-4 border border-gray-200"
@@ -68,6 +68,46 @@
               </button>
               
               {/* 추후 다른 메뉴 버튼들이 이곳에 추가될 수 있습니다 */}
+            </div>
+            
+            {/* UI표준점검 섹션 */}
+            <div className="mt-12">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">UI표준점검</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <button
+                  onClick={() => navigateToScreen('UI표준점검결과.html')}
+                  className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col items-center justify-center space-y-4 border border-gray-200"
+                >
+                  <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <i className="fas fa-clipboard-check text-2xl text-indigo-600"></i>
+                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900">UI표준점검 결과</h2>
+                  <p className="text-sm text-gray-500 text-center">UI 표준 준수 여부를 점검하고 결과를 확인합니다.</p>
+                </button>
+                
+                <button
+                  onClick={() => navigateToScreen('부서관리_표준점검.html')}
+                  className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col items-center justify-center space-y-4 border border-gray-200"
+                >
+                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-building text-2xl text-purple-600"></i>
+                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900">부서관리 표준점검</h2>
+                  <p className="text-sm text-gray-500 text-center">부서관리 화면의 입력 필드 maxlength 표준을 점검합니다.</p>
+                </button>
+                
+                <button
+                  onClick={() => navigateToScreen('UI표준점검결과_tabStops.html')}
+                  className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col items-center justify-center space-y-4 border border-gray-200"
+                >
+                  <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center">
+                    <i className="fas fa-search text-2xl text-teal-600"></i>
+                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900">TabStops 점검결과</h2>
+                  <p className="text-sm text-gray-500 text-center">UI 스크린샷 기반 표준점검 결과를 상세히 확인합니다.</p>
+                </button>
+                {/* UI표준점검 관련 버튼들이 여기에 추가될 예정 */}
+              </div>
             </div>
           </div>
         </div>

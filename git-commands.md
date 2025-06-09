@@ -47,4 +47,34 @@ npm run package
 
 # ZIP 파일 생성
 Compress-Archive -Path "release\UInsight-win32-x64\*" -DestinationPath "UInsight-Portable-1.0.0.zip" -Force
-``` 
+```
+
+## 생성된 파일들
+
+1. **`UInsight-Portable-1.0.0.exe`** (83MB) - 단일 실행파일 (포터블 버전)
+   - 설치가 필요 없는 독립 실행파일
+   - 바로 더블클릭으로 실행 가능
+   - 추천하는 방식입니다!
+
+2. **`UInsight Setup 1.0.0.exe`** (83MB) - 설치파일
+   - 일반적인 Windows 설치 프로그램
+   - 설치 후 시작 메뉴에 바로가기 생성
+   - 제어판에서 제거 가능
+
+## 사용 방법
+
+**포터블 버전 (권장):**
+```
+dist/UInsight-Portable-1.0.0.exe
+```
+- 이 파일을 원하는 위치에 복사하고 바로 실행하세요
+- 설치 과정 없이 즉시 사용 가능합니다
+
+**설치 버전:**
+```
+dist/UInsight Setup 1.0.0.exe
+```
+- 실행하면 설치 마법사가 나타납니다
+- 설치 후 바탕화면과 시작 메뉴에 바로가기가 생성됩니다
+
+두 버전 모두 완전히 동일한 기능을 제공하며, React 기반의 점검 화면과 모든 HTML 파일들이 포함되어 있습니다. 포터블 버전을 사용하시면 설치 없이 바로 사용하실 수 있어 더 편리합니다. 

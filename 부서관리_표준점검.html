@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>부서관리 - 표준점검 - UInsight</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <style>
+    /* 툴팁 스타일 */
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 200px;
+      background-color: #333;
+      color: white;
+      text-align: center;
+      border-radius: 6px;
+      padding: 8px;
+      position: absolute;
+      z-index: 1000;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -100px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 12px;
+    }
+    
+    .tooltip .tooltiptext::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #333 transparent transparent transparent;
+    }
+    
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- 헤더 -->
+  <header class="bg-white border-b border-gray-200 px-6 py-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <button onclick="window.history.back()" class="text-gray-500 hover:text-gray-700">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="text-xl font-semibold text-gray-900">부서관리</h1>
+      </div>
+      <div class="text-sm text-gray-500">
+        최종 수정: 2025-05-02 17:00:00
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-6xl mx-auto p-6">
+    <!-- 검색 및 필터 -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">부서 검색</h2>
+        <button onclick="openAddDepartmentModal()" 
+                class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
+          <i class="fas fa-plus mr-2"></i>새 부서 추가
+        </button>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="tooltip relative">
+          <input type="text" id="searchDeptName" maxlength="50" 
+                 placeholder="부서명으로 검색" 
+                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <span class="absolute top-0 right-0 transform translate-x-1 -translate-y-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">max:50</span>
+          <span class="tooltiptext">부서명 검색 (최대 50자)</span>
+        </div>
+        
+        <div class="tooltip relative">
+          <select id="searchDeptType" 
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option value="">부서 유형 선택</option>
+            <option value="본부">본부</option>
+            <option value="팀">팀</option>
+            <option value="파트">파트</option>
+          </select>
+          <span class="absolute top-0 right-0 transform translate-x-1 -translate-y-1 bg-gray-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">select</span>
+          <span class="tooltiptext">부서 유형별 필터링</span>
+        </div>
+        
+        <button onclick="searchDepartments()" 
+                class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+          <i class="fas fa-search mr-2"></i>검색
+        </button>
+      </div>
+    </div>
+
+    <!-- 부서 목록 테이블 -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="p-6 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900">부서 목록</h2>
+        <p class="text-sm text-gray-600 mt-1">총 <span id="totalCount">8</span>개 부서</p>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">부서코드</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">부서명</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">부서유형</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">담당자</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">연락처</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">인원수</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">DEPT001</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">경영기획본부</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">본부</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">김경영</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">02-1234-5678</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">25명</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <button onclick="editDepartment('DEPT001')" class="text-blue-600 hover:text-blue-900 mr-3">수정</button>
+                <button onclick="deleteDepartment('DEPT001')" class="text-red-600 hover:text-red-900">삭제</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">DEPT002</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">개발본부</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">본부</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">이개발</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">02-1234-5679</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">42명</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <button onclick="editDepartment('DEPT002')" class="text-blue-600 hover:text-blue-900 mr-3">수정</button>
+                <button onclick="deleteDepartment('DEPT002')" class="text-red-600 hover:text-red-900">삭제</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">DEPT003</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">UI/UX팀</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">팀</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">박디자인</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">02-1234-5680</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">8명</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <button onclick="editDepartment('DEPT003')" class="text-blue-600 hover:text-blue-900 mr-3">수정</button>
+                <button onclick="deleteDepartment('DEPT003')" class="text-red-600 hover:text-red-900">삭제</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 부서 추가/수정 모달 -->
+  <div id="departmentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 id="modalTitle" class="text-lg font-semibold text-gray-900">새 부서 추가</h3>
+            <button onclick="closeDepartmentModal()" class="text-gray-400 hover:text-gray-600">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <form id="departmentForm" class="space-y-4">
+            <div class="tooltip relative">
+              <label class="block text-sm font-medium text-gray-700 mb-1">부서코드 *</label>
+              <input type="text" id="deptCode" maxlength="10" required
+                     placeholder="예: DEPT001" 
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <span class="absolute top-6 right-0 transform translate-x-1 -translate-y-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">max:10</span>
+              <span class="tooltiptext">부서코드 (최대 10자, 필수입력)</span>
+            </div>
+            
+            <div class="tooltip relative">
+              <label class="block text-sm font-medium text-gray-700 mb-1">부서명 *</label>
+              <input type="text" id="deptName" maxlength="30" required
+                     placeholder="예: 개발본부" 
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <span class="absolute top-6 right-0 transform translate-x-1 -translate-y-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">max:30</span>
+              <span class="tooltiptext">부서명 (최대 30자, 필수입력)</span>
+            </div>
+            
+            <div class="tooltip relative">
+              <label class="block text-sm font-medium text-gray-700 mb-1">부서유형 *</label>
+              <select id="deptType" required
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="">선택하세요</option>
+                <option value="본부">본부</option>
+                <option value="팀">팀</option>
+                <option value="파트">파트</option>
+              </select>
+              <span class="absolute top-6 right-0 transform translate-x-1 -translate-y-1 bg-gray-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">select</span>
+              <span class="tooltiptext">부서 유형 (필수선택)</span>
+            </div>
+            
+            <div class="tooltip relative">
+              <label class="block text-sm font-medium text-gray-700 mb-1">담당자</label>
+              <input type="text" id="deptManager" maxlength="20"
+                     placeholder="예: 홍길동" 
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <span class="absolute top-6 right-0 transform translate-x-1 -translate-y-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">max:20</span>
+              <span class="tooltiptext">담당자명 (최대 20자)</span>
+            </div>
+            
+            <div class="tooltip relative">
+              <label class="block text-sm font-medium text-gray-700 mb-1">연락처</label>
+              <input type="tel" id="deptPhone" maxlength="15"
+                     placeholder="예: 02-1234-5678" 
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <span class="absolute top-6 right-0 transform translate-x-1 -translate-y-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">max:15</span>
+              <span class="tooltiptext">연락처 (최대 15자)</span>
+            </div>
+            
+            <div class="tooltip relative">
+              <label class="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+              <input type="email" id="deptEmail" maxlength="50"
+                     placeholder="예: dept@company.com" 
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <span class="absolute top-6 right-0 transform translate-x-1 -translate-y-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">max:50</span>
+              <span class="tooltiptext">이메일 주소 (최대 50자)</span>
+            </div>
+            
+            <div class="tooltip relative">
+              <label class="block text-sm font-medium text-gray-700 mb-1">부서설명</label>
+              <textarea id="deptDescription" maxlength="200" rows="3"
+                        placeholder="부서에 대한 간단한 설명을 입력하세요" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+              <span class="absolute top-6 right-0 transform translate-x-1 -translate-y-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">max:200</span>
+              <span class="tooltiptext">부서설명 (최대 200자)</span>
+            </div>
+          </form>
+          
+          <div class="flex space-x-3 mt-6">
+            <button onclick="saveDepartment()" 
+                    class="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors">
+              저장
+            </button>
+            <button onclick="closeDepartmentModal()" 
+                    class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">
+              취소
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 페이지 로드 시 모든 input 요소의 뱃지를 업데이트
+    document.addEventListener('DOMContentLoaded', function() {
+      updateBadges();
+      updateTooltips();
+    });
+    
+    // 뱃지 업데이트 함수
+    function updateBadges() {
+      const inputs = document.querySelectorAll('input, textarea, select');
+      
+      inputs.forEach(input => {
+        const parent = input.parentElement;
+        const maxLength = input.getAttribute('maxlength');
+        const inputType = input.type || input.tagName.toLowerCase();
+        
+        // 기존 뱃지 제거
+        const existingBadge = parent.querySelector('.length-badge');
+        if (existingBadge) {
+          existingBadge.remove();
+        }
+        
+        // 새 뱃지 생성
+        const badge = document.createElement('span');
+        badge.className = 'length-badge absolute text-xs px-2 py-0.5 rounded-full font-semibold';
+        
+        if (maxLength) {
+          // maxlength가 있는 경우 - 초록색
+          badge.textContent = `max:${maxLength}`;
+          badge.classList.add('bg-green-500', 'text-white');
+        } else if (inputType === 'text' || inputType === 'textarea' || inputType === 'email' || inputType === 'tel') {
+          // maxlength가 없는 텍스트 필드 - 주황색 경고
+          badge.textContent = 'NO LIMIT';
+          badge.classList.add('bg-orange-500', 'text-white');
+        } else if (inputType === 'select' || input.tagName.toLowerCase() === 'select') {
+          // 선택 항목 - 회색
+          badge.textContent = 'SELECT';
+          badge.classList.add('bg-gray-500', 'text-white');
+        } else {
+          // 기타 타입
+          badge.textContent = inputType.toUpperCase();
+          badge.classList.add('bg-blue-500', 'text-white');
+        }
+        
+        // 뱃지 위치 설정 (라벨이 있는 경우와 없는 경우 구분)
+        const hasLabel = parent.querySelector('label');
+        if (hasLabel) {
+          badge.classList.add('top-6', 'right-0', 'transform', 'translate-x-1', '-translate-y-1');
+        } else {
+          badge.classList.add('top-0', 'right-0', 'transform', 'translate-x-1', '-translate-y-1');
+        }
+        
+        parent.appendChild(badge);
+      });
+    }
+    
+    // 툴팁 업데이트 함수
+    function updateTooltips() {
+      const inputs = document.querySelectorAll('input, textarea, select');
+      
+      inputs.forEach(input => {
+        const tooltip = input.parentElement.querySelector('.tooltiptext');
+        if (tooltip) {
+          const maxLength = input.getAttribute('maxlength');
+          const inputType = input.type || input.tagName.toLowerCase();
+          const labelText = getLabelText(input);
+          
+          if (maxLength) {
+            // maxlength가 있는 경우
+            tooltip.textContent = `${labelText} (최대 ${maxLength}자)`;
+            tooltip.style.backgroundColor = '#10b981'; // 초록색
+          } else {
+            // maxlength가 없는 경우  
+            if (inputType === 'text' || inputType === 'textarea' || inputType === 'email' || inputType === 'tel') {
+              tooltip.textContent = `${labelText} (길이 제한 없음 - 권장: 설정 필요)`;
+              tooltip.style.backgroundColor = '#f59e0b'; // 노란색
+            } else if (inputType === 'select' || input.tagName.toLowerCase() === 'select') {
+              tooltip.textContent = `${labelText} (선택 항목)`;
+              tooltip.style.backgroundColor = '#6b7280'; // 회색
+            } else {
+              tooltip.textContent = `${labelText}`;
+              tooltip.style.backgroundColor = '#333'; // 기본 색상
+            }
+          }
+        }
+      });
+    }
+    
+    // 레이블 텍스트 가져오기
+    function getLabelText(input) {
+      const label = input.previousElementSibling;
+      if (label && label.tagName === 'LABEL') {
+        return label.textContent.replace(' *', '').trim();
+      }
+      return input.placeholder || input.id || input.tagName.toLowerCase();
+    }
+    
+    // 모달 관련 함수들
+    function openAddDepartmentModal() {
+      document.getElementById('modalTitle').textContent = '새 부서 추가';
+      document.getElementById('departmentModal').classList.remove('hidden');
+      document.getElementById('departmentForm').reset();
+      
+      // 모달이 열릴 때 뱃지와 툴팁 다시 업데이트
+      setTimeout(() => {
+        updateBadges();
+        updateTooltips();
+      }, 100);
+    }
+    
+    function closeDepartmentModal() {
+      document.getElementById('departmentModal').classList.add('hidden');
+    }
+    
+    function editDepartment(deptCode) {
+      // 편집 로직 구현
+      console.log('부서 편집:', deptCode);
+      
+      // 실제 구현 시에는 여기서 해당 부서 정보를 로드하여 모달에 표시
+      document.getElementById('modalTitle').textContent = '부서 정보 수정';
+      document.getElementById('departmentModal').classList.remove('hidden');
+      
+      // 예시 데이터 로드 (실제로는 서버에서 가져올 데이터)
+      const sampleData = {
+        'DEPT001': { code: 'DEPT001', name: '경영기획본부', type: '본부', manager: '김경영', phone: '02-1234-5678', email: 'mgmt@company.com', description: '회사의 전략적 기획을 담당하는 부서' },
+        'DEPT002': { code: 'DEPT002', name: '개발본부', type: '본부', manager: '이개발', phone: '02-1234-5679', email: 'dev@company.com', description: '소프트웨어 개발을 담당하는 부서' },
+        'DEPT003': { code: 'DEPT003', name: 'UI/UX팀', type: '팀', manager: '박디자인', phone: '02-1234-5680', email: 'design@company.com', description: '사용자 인터페이스 디자인을 담당하는 팀' }
+      };
+      
+      const data = sampleData[deptCode];
+      if (data) {
+        document.getElementById('deptCode').value = data.code;
+        document.getElementById('deptName').value = data.name;
+        document.getElementById('deptType').value = data.type;
+        document.getElementById('deptManager').value = data.manager;
+        document.getElementById('deptPhone').value = data.phone;
+        document.getElementById('deptEmail').value = data.email;
+        document.getElementById('deptDescription').value = data.description;
+      }
+      
+      setTimeout(() => {
+        updateBadges();
+        updateTooltips();
+      }, 100);
+    }
+    
+    function deleteDepartment(deptCode) {
+      if (confirm('정말로 이 부서를 삭제하시겠습니까?')) {
+        console.log('부서 삭제:', deptCode);
+        alert('부서가 삭제되었습니다.');
+        // 실제 구현에서는 서버에 삭제 요청을 보내고 테이블을 갱신
+      }
+    }
+    
+    function saveDepartment() {
+      // 입력 값 검증
+      const code = document.getElementById('deptCode').value.trim();
+      const name = document.getElementById('deptName').value.trim();
+      const type = document.getElementById('deptType').value;
+      
+      if (!code || !name || !type) {
+        alert('필수 항목을 모두 입력해주세요.');
+        return;
+      }
+      
+      // 저장 로직 구현
+      console.log('부서 저장:', {
+        code: code,
+        name: name,
+        type: type,
+        manager: document.getElementById('deptManager').value.trim(),
+        phone: document.getElementById('deptPhone').value.trim(),
+        email: document.getElementById('deptEmail').value.trim(),
+        description: document.getElementById('deptDescription').value.trim()
+      });
+      
+      alert('부서가 저장되었습니다.');
+      closeDepartmentModal();
+    }
+    
+    function searchDepartments() {
+      // 검색 로직 구현
+      const searchName = document.getElementById('searchDeptName').value.trim();
+      const searchType = document.getElementById('searchDeptType').value;
+      
+      console.log('부서 검색 실행:', {
+        name: searchName,
+        type: searchType
+      });
+      
+      // 실제 구현에서는 서버에 검색 요청을 보내고 결과를 테이블에 표시
+      alert(`검색 조건: 부서명="${searchName}", 유형="${searchType}"`);
+    }
+  </script>
+</body>
+</html> 
