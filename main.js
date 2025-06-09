@@ -25,7 +25,7 @@ function createWindow() {
   });
 
   // index.html 파일 로드
-  mainWindow.loadFile('index.html');
+  mainWindow.loadFile('src/pages/index.html');
 
   // 창이 준비되면 표시
   mainWindow.once('ready-to-show', () => {
@@ -86,7 +86,7 @@ function createMenu() {
           accelerator: 'CmdOrCtrl+H',
           click: () => {
             if (mainWindow) {
-              mainWindow.loadFile('index.html');
+              mainWindow.loadFile('src/pages/index.html');
             }
           }
         },
@@ -126,7 +126,7 @@ function createMenu() {
           label: '점검대상 화면관리',
           click: () => {
             if (mainWindow) {
-              mainWindow.loadFile('점검대상화면관리.html');
+              mainWindow.loadFile('src/pages/점검대상화면관리.html');
             }
           }
         },
@@ -134,7 +134,7 @@ function createMenu() {
           label: '점검 사후기록',
           click: () => {
             if (mainWindow) {
-              mainWindow.loadFile('점검사후기록.html');
+              mainWindow.loadFile('src/pages/점검사후기록.html');
             }
           }
         },
@@ -142,7 +142,7 @@ function createMenu() {
           label: '점검현황_회차',
           click: () => {
             if (mainWindow) {
-              mainWindow.loadFile('점검현황_회차.html');
+              mainWindow.loadFile('src/pages/점검현황_회차.html');
             }
           }
         },
@@ -150,7 +150,7 @@ function createMenu() {
           label: '연관메인화면 선택',
           click: () => {
             if (mainWindow) {
-              mainWindow.loadFile('연관메인화면선택.html');
+              mainWindow.loadFile('src/pages/연관메인화면선택.html');
             }
           }
         }

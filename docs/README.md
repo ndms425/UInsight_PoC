@@ -174,3 +174,42 @@ npm run package
 ---
 
 **UInsight Team** | v1.0.0 | MIT License 
+
+## 프로젝트 구조
+
+```
+UInsight/
+├── src/                          # 소스 코드
+│   ├── pages/                   # HTML 페이지들
+│   │   ├── index.html          # 메인 화면
+│   │   ├── 점검대상화면관리.html
+│   │   ├── 점검사후기록.html
+│   │   ├── 점검현황_회차.html
+│   │   ├── 연관메인화면선택.html
+│   │   ├── UI표준점검결과.html
+│   │   ├── 부서관리_표준점검.html
+│   │   └── UI표준점검결과_tabStops.html
+│   ├── components/              # React/TSX 컴포넌트
+│   │   └── 점검-수행-버튼-추가.tsx
+│   ├── styles/                  # CSS 파일들
+│   │   ├── input.css
+│   │   └── output.css
+│   └── scripts/                 # JavaScript 파일들
+│       └── index.js
+├── build/                       # 빌드 관련 파일들
+│   ├── create-portable.ps1
+│   ├── electron-builder.yml
+│   ├── installer.nsi
+│   └── safelist.txt
+├── docs/                        # 문서 파일들
+│   ├── README.md
+│   ├── LICENSE
+│   └── git-commands.md
+├── node_modules/                # Node.js 의존성
+├── main.js                      # Electron 메인 프로세스
+├── package.json                 # 프로젝트 설정
+├── package-lock.json            # 의존성 잠금 파일
+├── tailwind.config.js           # Tailwind CSS 설정
+├── postcss.config.js            # PostCSS 설정
+└── .gitignore                   # Git 무시 파일 목록
+``` 
