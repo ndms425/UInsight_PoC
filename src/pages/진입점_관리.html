@@ -26,6 +26,10 @@
             const [simulationResult, setSimulationResult] = React.useState(null);
             const [screenSearchQuery, setScreenSearchQuery] = React.useState('');
             const [showSearchDropdown, setShowSearchDropdown] = React.useState(false);
+            const [selectedMenuIds, setSelectedMenuIds] = React.useState(new Set());
+            const [draggedMenus, setDraggedMenus] = React.useState([]);
+            const [dropTargetId, setDropTargetId] = React.useState(null);
+            const [isDragging, setIsDragging] = React.useState(false);
 
             // 프로젝트 목록
             const projects = ['프로젝트A', '프로젝트B', '프로젝트C'];
@@ -108,6 +112,21 @@
             // 진입방식 수정 상태
             const [editingMenu, setEditingMenu] = React.useState(null);
 
+            // 메뉴 경로 찾기 (상위 메뉴들)
+            const findMenuPath = (menus, targetId, currentPath = []) => {
+                for (const menu of menus) {
+                    const newPath = [...currentPath, menu];
+                    if (menu.id === targetId) {
+                        return newPath;
+                    }
+                    if (menu.children && menu.children.length > 0) {
+                        const childPath = findMenuPath(menu.children, targetId, newPath);
+                        if (childPath) return childPath;
+                    }
+                }
+                return null;
+            };
+
             // 메뉴 선택 핸들러
             const handleMenuSelect = (menu) => {
                 setSelectedMenu(menu);
@@ -120,6 +139,199 @@
                 console.log('메뉴 수정 저장:', editingMenu);
                 setSelectedMenu(null);
                 setEditingMenu(null);
+            };
+
+            // 체크박스 처리
+            const handleMenuCheck = (menuId, checked) => {
+                const newSelected = new Set(selectedMenuIds);
+                if (checked) {
+                    newSelected.add(menuId);
+                } else {
+                    newSelected.delete(menuId);
+                }
+                setSelectedMenuIds(newSelected);
+            };
+
+            // 전체 선택/해제
+            const handleSelectAll = (checked) => {
+                if (checked) {
+                    const allIds = getAllMenuIds(menuData);
+                    setSelectedMenuIds(new Set(allIds));
+                } else {
+                    setSelectedMenuIds(new Set());
+                }
+            };
+
+            // 드래그 시작
+            const handleDragStart = (e, menu) => {
+                setIsDragging(true);
+                
+                // 선택된 메뉴들이 있으면 그것들을 드래그, 없으면 현재 메뉴만
+                const menusToMove = selectedMenuIds.size > 0 && selectedMenuIds.has(menu.id) 
+                    ? Array.from(selectedMenuIds).map(id => findMenuById(menuData, id)).filter(Boolean)
+                    : [menu];
+                
+                setDraggedMenus(menusToMove);
+                
+                // 드래그 데이터 설정
+                e.dataTransfer.setData('text/plain', JSON.stringify(menusToMove.map(m => m.id)));
+                e.dataTransfer.effectAllowed = 'move';
+                
+                // 드래그 이미지 커스터마이징
+                const dragElement = e.currentTarget.cloneNode(true);
+                dragElement.style.opacity = '0.8';
+                dragElement.style.backgroundColor = '#3B82F6';
+                dragElement.style.color = 'white';
+                document.body.appendChild(dragElement);
+                e.dataTransfer.setDragImage(dragElement, 0, 0);
+                setTimeout(() => document.body.removeChild(dragElement), 0);
+            };
+
+            // 드래그 오버
+            const handleDragOver = (e, targetMenu) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                
+                // 드롭 가능한지 확인
+                if (canDropOnMenu(targetMenu)) {
+                    setDropTargetId(targetMenu.id);
+                }
+            };
+
+            // 드래그 리브
+            const handleDragLeave = (e) => {
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                    setDropTargetId(null);
+                }
+            };
+
+            // 드롭
+            const handleDrop = (e, targetMenu) => {
+                e.preventDefault();
+                
+                if (!canDropOnMenu(targetMenu)) return;
+                
+                // 메뉴들을 새로운 위치로 이동
+                const newMenuData = moveMenusToTarget(menuData, draggedMenus, targetMenu);
+                setMenuData(newMenuData);
+                
+                // 상태 초기화
+                setIsDragging(false);
+                setDraggedMenus([]);
+                setDropTargetId(null);
+                setSelectedMenuIds(new Set());
+                
+                console.log(`메뉴 이동 완료: ${draggedMenus.map(m => m.name).join(', ')} → ${targetMenu.name} 하위로 이동`);
+            };
+
+            // 드래그 종료
+            const handleDragEnd = () => {
+                setIsDragging(false);
+                setDraggedMenus([]);
+                setDropTargetId(null);
+            };
+
+            // 메뉴 찾기 (ID로)
+            const findMenuById = (menus, targetId) => {
+                for (const menu of menus) {
+                    if (menu.id === targetId) return menu;
+                    if (menu.children) {
+                        const found = findMenuById(menu.children, targetId);
+                        if (found) return found;
+                    }
+                }
+                return null;
+            };
+
+            // 드롭 가능한지 확인
+            const canDropOnMenu = (targetMenu) => {
+                if (!draggedMenus.length) return false;
+                
+                // 자기 자신이나 하위 메뉴로는 이동 불가
+                return !draggedMenus.some(draggedMenu => 
+                    draggedMenu.id === targetMenu.id || 
+                    checkIfDescendant(draggedMenu, targetMenu.id)
+                );
+            };
+
+            // 하위 메뉴인지 확인 (개선된 버전)
+            const checkIfDescendant = (ancestorMenu, descendantId) => {
+                if (!ancestorMenu.children) return false;
+                for (let child of ancestorMenu.children) {
+                    if (child.id === descendantId) return true;
+                    if (checkIfDescendant(child, descendantId)) return true;
+                }
+                return false;
+            };
+
+            // 메뉴들을 타겟으로 이동
+            const moveMenusToTarget = (menus, menusToMove, targetMenu) => {
+                let newMenus = JSON.parse(JSON.stringify(menus));
+                
+                // 1. 이동할 메뉴들을 제거
+                const removedMenus = [];
+                menusToMove.forEach(menuToMove => {
+                    const removed = removeMenuFromTree(newMenus, menuToMove.id);
+                    if (removed) removedMenus.push(removed);
+                });
+                
+                // 2. 타겟 메뉴에 추가
+                removedMenus.forEach(removedMenu => {
+                    addMenuToParent(newMenus, targetMenu.id, removedMenu);
+                });
+                
+                return newMenus;
+            };
+
+            // 트리에서 메뉴 제거
+            const removeMenuFromTree = (nodes, targetId) => {
+                for (let i = 0; i < nodes.length; i++) {
+                    if (nodes[i].id === targetId) {
+                        return nodes.splice(i, 1)[0];
+                    }
+                    if (nodes[i].children) {
+                        const removed = removeMenuFromTree(nodes[i].children, targetId);
+                        if (removed) return removed;
+                    }
+                }
+                return null;
+            };
+
+            // 부모 메뉴에 추가
+            const addMenuToParent = (nodes, parentId, menuToAdd) => {
+                for (let node of nodes) {
+                    if (node.id === parentId) {
+                        if (!node.children) node.children = [];
+                        
+                        // 새로운 레벨 설정
+                        const newLevel = node.level.replace('lv', '');
+                        const nextLevel = `lv${parseInt(newLevel) + 1}`;
+                        menuToAdd.level = nextLevel;
+                        
+                        // 하위 메뉴들의 레벨도 재귀적으로 업데이트
+                        updateChildrenLevels(menuToAdd, nextLevel);
+                        
+                        node.children.push(menuToAdd);
+                        return true;
+                    }
+                    if (node.children && addMenuToParent(node.children, parentId, menuToAdd)) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+
+            // 하위 메뉴들의 레벨 업데이트
+            const updateChildrenLevels = (menu, parentLevel) => {
+                if (menu.children) {
+                    const currentLevelNum = parseInt(parentLevel.replace('lv', ''));
+                    const childLevel = `lv${currentLevelNum + 1}`;
+                    
+                    menu.children.forEach(child => {
+                        child.level = childLevel;
+                        updateChildrenLevels(child, childLevel);
+                    });
+                }
             };
 
             // 새 메뉴 추가
@@ -314,10 +526,39 @@
                 return menus.map(menu => (
                     <React.Fragment key={menu.id}>
                         <tr 
-                            className={`hover:bg-gray-50 cursor-pointer ${selectedMenu?.id === menu.id ? 'bg-blue-50' : ''}`}
-                            onClick={() => handleMenuSelect(menu)}
+                            className={`transition-colors duration-200 ${
+                                selectedMenu?.id === menu.id ? 'bg-blue-50' : 
+                                dropTargetId === menu.id ? 'bg-green-50 border-green-300' : 
+                                selectedMenuIds.has(menu.id) ? 'bg-yellow-50' :
+                                'hover:bg-gray-50'
+                            } ${isDragging && draggedMenus.some(m => m.id === menu.id) ? 'opacity-50' : ''}`}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, menu)}
+                            onDragOver={(e) => handleDragOver(e, menu)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => handleDrop(e, menu)}
+                            onDragEnd={handleDragEnd}
                         >
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            {/* 체크박스 */}
+                            <td className="px-3 py-4 whitespace-nowrap">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedMenuIds.has(menu.id)}
+                                    onChange={(e) => {
+                                        e.stopPropagation();
+                                        handleMenuCheck(menu.id, e.target.checked);
+                                    }}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                            </td>
+                            
+                            {/* 드래그 핸들 */}
+                            <td className="px-2 py-4 whitespace-nowrap text-center">
+                                <i className="fas fa-grip-vertical text-gray-400 cursor-move hover:text-gray-600"></i>
+                            </td>
+                            
+                            {/* 메뉴 레벨 */}
+                            <td className="px-4 py-4 whitespace-nowrap">
                                 <div className="flex items-center" style={{paddingLeft: `${depth * 20}px`}}>
                                     {menu.children && menu.children.length > 0 && (
                                         <i className="fas fa-chevron-right text-gray-400 mr-2"></i>
@@ -331,9 +572,21 @@
                                     </span>
                                 </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            
+                            {/* 메뉴명 */}
+                            <td 
+                                className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 cursor-pointer"
+                                onClick={() => handleMenuSelect(menu)}
+                            >
                                 {menu.name}
+                                {dropTargetId === menu.id && (
+                                    <span className="ml-2 text-green-600">
+                                        <i className="fas fa-arrow-down"></i> 드롭 가능
+                                    </span>
+                                )}
                             </td>
+                            
+                            {/* 진입방식 */}
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                     menu.method === 'CSS Selector' ? 'bg-blue-100 text-blue-800' :
@@ -343,11 +596,21 @@
                                     {menu.method}
                                 </span>
                             </td>
+                            
+                            {/* 최종수정일 */}
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {menu.lastModified}
                             </td>
+                            
+                            {/* 수정 버튼 */}
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button className="text-blue-600 hover:text-blue-900">
+                                <button 
+                                    className="text-blue-600 hover:text-blue-900"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleMenuSelect(menu);
+                                    }}
+                                >
                                     <i className="fas fa-edit"></i>
                                 </button>
                             </td>
@@ -539,20 +802,6 @@
                         {/* 상단 영역 */}
                         <div className="mb-6">
                             <h1 className="text-2xl font-bold mb-4">진입점 관리</h1>
-                            
-                            {/* 프로젝트 선택 */}
-                            <div className="flex items-center space-x-4 mb-6">
-                                <label className="text-sm font-medium text-gray-700">프로젝트 선택:</label>
-                                <select
-                                    value={selectedProject}
-                                    onChange={(e) => setSelectedProject(e.target.value)}
-                                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    {projects.map(project => (
-                                        <option key={project} value={project}>{project}</option>
-                                    ))}
-                                </select>
-                            </div>
 
                             {/* 탭 메뉴 */}
                             <div className="border-b border-gray-200">
@@ -601,7 +850,21 @@
                                 <div className="lg:col-span-2">
                                     <div className="bg-white rounded-lg shadow">
                                         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                                            <h3 className="text-lg font-medium text-gray-900">메뉴 진입방식 목록</h3>
+                                            <div className="flex items-center space-x-4">
+                                                <h3 className="text-lg font-medium text-gray-900">메뉴 진입방식 목록</h3>
+                                                {selectedMenuIds.size > 0 && (
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                        <i className="fas fa-check-square mr-1"></i>
+                                                        {selectedMenuIds.size}개 선택됨
+                                                    </span>
+                                                )}
+                                                {isDragging && (
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                        <i className="fas fa-arrows-alt mr-1"></i>
+                                                        드래그 중...
+                                                    </span>
+                                                )}
+                                            </div>
                                             <div className="flex space-x-2">
                                                 <button
                                                     onClick={handleExcelDownload}
@@ -639,7 +902,17 @@
                                             <table className="min-w-full divide-y divide-gray-200">
                                                 <thead className="bg-gray-50">
                                                     <tr>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        <th className="px-3 py-3 text-left">
+                                                            <input
+                                                                type="checkbox"
+                                                                onChange={(e) => handleSelectAll(e.target.checked)}
+                                                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                            />
+                                                        </th>
+                                                        <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            드래그
+                                                        </th>
+                                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             메뉴 레벨
                                                         </th>
                                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -669,6 +942,52 @@
                                     {selectedMenu ? (
                                         <div className="bg-white rounded-lg shadow p-6">
                                             <h3 className="text-lg font-medium text-gray-900 mb-4">진입방식 수정</h3>
+                                            
+                                            {/* 메뉴 경로 표시 */}
+                                            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                                                <div className="text-sm font-medium text-gray-700 mb-2">
+                                                    메뉴 경로 
+                                                    <span className="text-xs text-gray-500 ml-2">(클릭하여 해당 메뉴 수정 가능)</span>
+                                                </div>
+                                                <div className="flex items-center space-x-2 text-sm">
+                                                    {findMenuPath(menuData, selectedMenu.id)?.map((pathMenu, index, array) => (
+                                                        <React.Fragment key={pathMenu.id}>
+                                                            <span 
+                                                                className={`px-2 py-1 rounded transition-colors duration-200 ${
+                                                                    index === array.length - 1 
+                                                                        ? 'bg-blue-100 text-blue-800 font-medium' 
+                                                                        : 'bg-gray-200 text-gray-600 cursor-pointer hover:bg-gray-300 hover:text-gray-800'
+                                                                }`}
+                                                                onClick={() => {
+                                                                    if (index < array.length - 1) {
+                                                                        handleMenuSelect(pathMenu);
+                                                                    }
+                                                                }}
+                                                                title={index < array.length - 1 ? `${pathMenu.name} 메뉴 수정하기` : '현재 선택된 메뉴'}
+                                                            >
+                                                                <span className={`text-xs mr-1 ${
+                                                                    pathMenu.level === 'lv1' ? 'text-blue-600' :
+                                                                    pathMenu.level === 'lv2' ? 'text-green-600' :
+                                                                    'text-purple-600'
+                                                                }`}>
+                                                                    {pathMenu.level}
+                                                                </span>
+                                                                {pathMenu.name}
+                                                                {index < array.length - 1 && (
+                                                                    <i className="fas fa-edit text-xs ml-1 opacity-0 group-hover:opacity-100"></i>
+                                                                )}
+                                                            </span>
+                                                            {index < array.length - 1 && (
+                                                                <i className="fas fa-chevron-right text-gray-400 text-xs"></i>
+                                                            )}
+                                                        </React.Fragment>
+                                                    ))}
+                                                </div>
+                                                <div className="mt-2 text-xs text-gray-500">
+                                                    💡 팁: 상위 메뉴를 클릭하면 해당 메뉴로 이동하여 다른 위치로 옮기거나 수정할 수 있습니다.
+                                                </div>
+                                            </div>
+                                            
                                             <div className="space-y-4">
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-1">메뉴명</label>
@@ -714,6 +1033,17 @@
                                                     >
                                                         테스트 실행
                                                     </button>
+                                                </div>
+                                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                                    <div className="text-sm text-blue-800">
+                                                        <i className="fas fa-info-circle mr-2"></i>
+                                                        <strong>메뉴 이동 방법:</strong>
+                                                    </div>
+                                                    <div className="text-xs text-blue-700 mt-1 ml-5">
+                                                        • 체크박스로 여러 메뉴 선택 후 드래그 앤 드롭<br/>
+                                                        • 드래그 핸들(⋮⋮)을 잡고 이동할 위치로 드래그<br/>
+                                                        • 초록색으로 하이라이트된 곳에 드롭
+                                                    </div>
                                                 </div>
                                                 <button
                                                     onClick={() => {setSelectedMenu(null); setEditingMenu(null);}}
@@ -1144,6 +1474,8 @@
                             </div>
                         </div>
                     )}
+
+
 
                     {/* 화면 매핑 추가 모달 */}
                     {showScreenAddModal && (
