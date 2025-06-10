@@ -19,10 +19,20 @@
       const [searchQuery, setSearchQuery] = useState('');
       const [currentPage, setCurrentPage] = useState(1);
       const [itemsPerPage, setItemsPerPage] = useState(10);
-      const [editingTagRow, setEditingTagRow] = useState(null);
-      const [newTag, setNewTag] = useState('');
       const [editingId, setEditingId] = useState(null);
       const [editingValue, setEditingValue] = useState('');
+
+      // 연관화면 데이터 (테스트 수행 기록.html에서 가져온 데이터)
+      const relatedScreensData = [
+        { id: 1, name: '요구사항정의_메인', type: 'Main' },
+        { id: 2, name: '요구사항_조회', type: 'Popup' },
+        { id: 3, name: '로그인_메인', type: 'Main' },
+        { id: 4, name: '사용자_조회', type: 'Sub' },
+        { id: 5, name: '대시보드_메인', type: 'Main' },
+        { id: 6, name: '설정_팝업', type: 'Popup' },
+        { id: 7, name: '프로필_수정', type: 'Sub' },
+        { id: 8, name: '알림_센터', type: 'Popup' }
+      ];
 
       const tableData = [
         {
@@ -32,7 +42,7 @@
           checkDate: '2025-06-07 14:30',
           type: 'Main',
           accessPath: ['설정', '대시보드'],
-          relatedScreens: ['서브1', '서브2', '팝업1'],
+          relatedScreens: [1, 2, 5], // 연관화면 ID 배열
           automation: 'ON',
           checkResult: 'completed'
         },
@@ -43,7 +53,7 @@
           checkDate: '2025-06-07 14:30',
           type: 'Sub',
           accessPath: ['설정'],
-          relatedScreens: ['화면4', '서브1'],
+          relatedScreens: [3, 4], // 연관화면 ID 배열
           automation: 'ERROR',
           checkResult: 'completed'
         },
@@ -54,7 +64,7 @@
           checkDate: '2025-06-07 14:30',
           type: 'Popup',
           accessPath: ['설정', '관리'],
-          relatedScreens: ['화면5', '화면6'],
+          relatedScreens: [6, 7, 8], // 연관화면 ID 배열
           automation: 'OFF',
           checkResult: 'needed'
         }
@@ -108,32 +118,19 @@
         }
       };
 
-      const getScreenBadge = (screenName) => {
-        if (screenName.includes('메인')) {
+      const getScreenBadge = (screenType) => {
+        if (screenType === 'Main') {
           return <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full mr-1">M</span>;
-        } else if (screenName.includes('팝업')) {
+        } else if (screenType === 'Popup') {
           return <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full mr-1">P</span>;
         } else {
           return <span className="bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded-full mr-1">S</span>;
         }
       };
 
-      const addTag = (rowIndex) => {
-        if (newTag.trim()) {
-          const updatedData = [...tableData];
-          updatedData[rowIndex].relatedScreens.push(newTag.trim());
-          setNewTag('');
-          setEditingTagRow(null);
-        }
-      };
-
-      const handleKeyPress = (e, rowIndex) => {
-        if (e.key === 'Enter') {
-          addTag(rowIndex);
-        } else if (e.key === 'Escape') {
-          setNewTag('');
-          setEditingTagRow(null);
-        }
+      // 연관화면 정보를 가져오는 함수
+      const getRelatedScreenInfo = (screenId) => {
+        return relatedScreensData.find(screen => screen.id === screenId);
       };
 
       // 점검 수행 버튼 클릭 핸들러
@@ -167,11 +164,6 @@
             alert('팝업이 차단되었습니다. 팝업 차단을 해제하고 다시 시도해주세요.');
           }
         }
-      };
-
-      const removeTag = (rowIndex, tagIndex) => {
-        const updatedData = [...tableData];
-        updatedData[rowIndex].relatedScreens.splice(tagIndex, 1);
       };
 
       const startEditing = (id, value) => {
@@ -239,6 +231,7 @@
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">화면ID</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">화면명</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">화면유형</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">연관화면</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">점검상태</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">점검경로</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">점검일시</th>
@@ -277,60 +270,28 @@
                           <div className="text-sm text-gray-900">
                             {item.name}
                           </div>
-                          <div className="mt-1 flex flex-wrap gap-1 items-center">
-                            {item.relatedScreens.map((screen, idx) => (
-                              <span key={idx} className="inline-flex items-center text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full group relative">
-                                {getScreenBadge(screen)}
-                                #{screen}
-                                {screen === '서브1' && (
-                                  <div className="relative inline-block ml-1 group">
-                                    <i className="fas fa-exclamation-triangle text-yellow-500 cursor-help"></i>
-                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-200 whitespace-nowrap z-10">
-                                      서브1 화면이 배포 후 미점검 상태입니다.
-                                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
-                                    </div>
-                                  </div>
-                                )}
-                                <button 
-                                  onClick={() => removeTag(index, idx)}
-                                  className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-gray-400 hover:text-red-500"
-                                >
-                                  <i className="fas fa-minus text-xs"></i>
-                                </button>
-                              </span>
-                            ))}
-                            {editingTagRow === index ? (
-                              <div className="inline-flex items-center">
-                                <input
-                                  type="text"
-                                  className="text-xs border border-gray-300 rounded-l-full px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-purple-500 w-24"
-                                  value={newTag}
-                                  onChange={(e) => setNewTag(e.target.value)}
-                                  onKeyDown={(e) => handleKeyPress(e, index)}
-                                  placeholder="새 태그"
-                                  autoFocus
-                                />
-                                <button
-                                  className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-r-full border border-l-0 border-gray-300 hover:bg-purple-200"
-                                  onClick={() => addTag(index)}
-                                >
-                                  추가
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                                onClick={() => setEditingTagRow(index)}
-                              >
-                                <i className="fas fa-plus text-xs"></i>
-                              </button>
-                            )}
-                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeBadgeColor(item.type)}`}>
                             {item.type}
                           </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap gap-1 items-center">
+                            {item.relatedScreens && item.relatedScreens.length > 0 ? (
+                              item.relatedScreens.map((screenId, idx) => {
+                                const screenInfo = getRelatedScreenInfo(screenId);
+                                return screenInfo ? (
+                                  <span key={idx} className="inline-flex items-center text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                                    {getScreenBadge(screenInfo.type)}
+                                    {screenInfo.name}
+                                  </span>
+                                ) : null;
+                              })
+                            ) : (
+                              <span className="text-xs text-gray-400 italic">연관화면 없음</span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {getCheckResultIcon(item.checkResult)}
