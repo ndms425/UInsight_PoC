@@ -34,12 +34,14 @@
 
             // 추천 연관화면 리스트 (고정)
             const recommendedScreens = [
-                { id: 'rec1', name: '로그인_메인', type: 'Main' },
-                { id: 'rec2', name: '사용자_조회', type: 'Sub' },
-                { id: 'rec3', name: '대시보드_메인', type: 'Main' },
-                { id: 'rec4', name: '설정_팝업', type: 'Popup' },
-                { id: 'rec5', name: '프로필_수정', type: 'Sub' },
-                { id: 'rec6', name: '알림_센터', type: 'Popup' }
+                { id: 'rec1', name: '요구사항정의_메인', type: 'Main' },
+                { id: 'rec2', name: '요구사항_조회', type: 'Popup' },
+                { id: 'rec3', name: '로그인_메인', type: 'Main' },
+                { id: 'rec4', name: '사용자_조회', type: 'Sub' },
+                { id: 'rec5', name: '대시보드_메인', type: 'Main' },
+                { id: 'rec6', name: '설정_팝업', type: 'Popup' },
+                { id: 'rec7', name: '프로필_수정', type: 'Sub' },
+                { id: 'rec8', name: '알림_센터', type: 'Popup' }
             ];
 
             // 더미 데이터
@@ -119,16 +121,7 @@
             // 다운로드 버튼 활성화 여부
             const isDownloadEnabled = selectedItems.length > 0;
 
-            // 연관화면 토글
-            const toggleRelatedScreen = (id) => {
-                setRelatedScreens(prev => 
-                    prev.map(screen => 
-                        screen.id === id 
-                            ? { ...screen, active: !screen.active }
-                            : screen
-                    )
-                );
-            };
+
 
             // 새 연관화면 추가
             const addRelatedScreen = () => {
@@ -236,10 +229,7 @@
                                                     <i className="fas fa-desktop mr-1"></i>
                                                     {relatedScreens.length}개 등록
                                                 </span>
-                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                    <i className="fas fa-check-circle mr-1"></i>
-                                                    {relatedScreens.filter(s => s.active).length}개 활성
-                                                </span>
+
                                             </div>
                                             
                                             {/* 미니 화면 목록 (접힌 상태에서) */}
@@ -248,11 +238,7 @@
                                                     {relatedScreens.slice(0, 3).map((screen) => (
                                                         <span
                                                             key={screen.id}
-                                                            className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                                                                screen.active 
-                                                                    ? 'bg-blue-500 text-white' 
-                                                                    : 'bg-gray-300 text-gray-600'
-                                                            }`}
+                                                            className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-500 text-white"
                                                         >
                                                             {screen.name}
                                                         </span>
@@ -305,24 +291,19 @@
                                                             <div
                                                                 key={screen.id}
                                                                 className={`group relative inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md ${
-                                                                    screen.active 
-                                                                        ? screen.type === 'Main' 
-                                                                            ? 'bg-blue-100 text-blue-800 border-2 border-blue-300 shadow-sm' 
-                                                                            : 'bg-purple-100 text-purple-800 border-2 border-purple-300 shadow-sm'
-                                                                        : 'bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200'
+                                                                    screen.type === 'Main' 
+                                                                        ? 'bg-blue-100 text-blue-800 border-2 border-blue-300 shadow-sm' 
+                                                                        : 'bg-purple-100 text-purple-800 border-2 border-purple-300 shadow-sm'
                                                                 }`}
                                                             >
-                                                                <button
-                                                                    onClick={() => toggleRelatedScreen(screen.id)}
-                                                                    className="flex items-center mr-2"
-                                                                >
+                                                                <div className="flex items-center mr-2">
                                                                     <span className="mr-2">{screen.name}</span>
                                                                     <span className={`px-2 py-0.5 rounded text-xs font-bold ${
                                                                         screen.type === 'Main' ? 'bg-blue-500 text-white' : 'bg-purple-500 text-white'
                                                                     }`}>
                                                                         {screen.type}
                                                                     </span>
-                                                                </button>
+                                                                </div>
                                                                 <button
                                                                     onClick={() => removeRelatedScreen(screen.id)}
                                                                     className="ml-2 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-1 transition-all duration-200"
@@ -395,89 +376,38 @@
                         </div>
 
                         {/* 수행기록 화면 추가 안내 */}
-                        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-4">
-                            <div className="flex items-start space-x-3">
-                                <div className="flex-shrink-0">
-                                    <i className="fas fa-lightbulb text-amber-600 text-lg"></i>
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="text-sm font-medium text-amber-900 mb-1">
+                        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                    <span className="text-sm font-medium text-amber-900">
                                         💡 수행기록에 포함된 화면을 연관화면으로 등록해보세요
-                                    </h3>
-                                    <p className="text-sm text-amber-800">
-                                        아래 테스트 수행 기록에서 확인된 화면들을 위의 <strong>'연관화면 관리'</strong>에 추가하면, 
-                                        향후 동일한 화면들의 테스트를 더욱 체계적으로 관리할 수 있습니다.
-                                    </p>
-                                    <div className="mt-2 flex items-center text-xs text-amber-700">
-                                        <i className="fas fa-arrow-up mr-1"></i>
-                                        연관화면 관리 → 추천 화면에서 빠르게 추가하거나, '새 화면 추가' 버튼을 이용해보세요
-                                    </div>
-                                </div>
-                                <div className="flex-shrink-0">
-                                    <button
-                                        onClick={() => setIsRelatedScreensExpanded(true)}
-                                        className="inline-flex items-center px-2 py-1 text-xs bg-amber-100 text-amber-800 rounded-md hover:bg-amber-200 transition-colors duration-200"
-                                    >
-                                        <i className="fas fa-arrow-up mr-1"></i>
-                                        관리하기
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 필터링 섹션 */}
-                        <div className="bg-white rounded-lg shadow mb-6">
-                            <div className="p-6 border-b border-gray-200 bg-gray-50">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-medium text-gray-900">필터링</h3>
-                                    <div className="flex items-center space-x-2">
-                                        {/* 필터 항목 추가 버튼 */}
-                                        <div className="relative filter-dropdown">
-                                            <button
-                                                onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                                                className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 border border-blue-300 rounded-md hover:bg-blue-50"
-                                            >
-                                                <i className="fas fa-plus mr-1"></i>
-                                                필터 항목 추가
-                                            </button>
-                                            
-                                            {/* 필터 드롭다운 */}
-                                            {showFilterDropdown && (
-                                                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                                                    <div className="py-1">
-                                                        {filterOptions.map((option) => (
-                                                            <button
-                                                                key={option.key}
-                                                                onClick={() => toggleFilter(option.key)}
-                                                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                                                                    activeFilters.includes(option.key) ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
-                                                                }`}
-                                                            >
-                                                                <i className={`fas ${activeFilters.includes(option.key) ? 'fa-check' : 'fa-plus'} mr-2`}></i>
-                                                                {option.label}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                        
-                                        <button
-                                            onClick={resetFilters}
-                                            className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-100"
-                                        >
-                                            <i className="fas fa-undo mr-1"></i>
-                                            초기화
+                                    </span>
+                                    <div className="relative group">
+                                        <button className="w-4 h-4 rounded-full bg-amber-200 text-amber-700 hover:bg-amber-300 transition-colors duration-200 flex items-center justify-center">
+                                            <i className="fas fa-question text-xs"></i>
                                         </button>
+                                        {/* 툴팁 */}
+                                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-80 p-3 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                                            <div className="mb-2">
+                                                아래 테스트 수행 기록에서 확인된 화면들을 위의 <strong>'연관화면 관리'</strong>에 추가하면, 
+                                                향후 동일한 화면들의 테스트를 더욱 체계적으로 관리할 수 있습니다.
+                                            </div>
+                                            <div className="text-xs text-gray-300 flex items-center">
+                                                <i className="fas fa-arrow-up mr-1"></i>
+                                                연관화면 관리 → 추천 화면에서 빠르게 추가하거나, '새 화면 추가' 버튼을 이용해보세요
+                                            </div>
+                                            {/* 툴팁 화살표 */}
+                                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                        </div>
                                     </div>
                                 </div>
-
-                                {/* 활성화된 필터들 */}
-                                {activeFilters.length > 0 && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {/* 기존 필터 UI 컴포넌트들... */}
-                                    </div>
-                                )}
+                                <button
+                                    onClick={() => setIsRelatedScreensExpanded(true)}
+                                    className="inline-flex items-center px-2 py-1 text-xs bg-amber-100 text-amber-800 rounded-md hover:bg-amber-200 transition-colors duration-200"
+                                >
+                                    <i className="fas fa-arrow-up mr-1"></i>
+                                    관리하기
+                                </button>
                             </div>
                         </div>
 

@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>진입점 관리 - UInsight</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const EntryPointManager = () => {
+            const [selectedProject, setSelectedProject] = React.useState('프로젝트A');
+            const [activeTab, setActiveTab] = React.useState('manage');
+            const [selectedMenu, setSelectedMenu] = React.useState(null);
+            const [showAddModal, setShowAddModal] = React.useState(false);
+            const [selectedScreen, setSelectedScreen] = React.useState(null);
+            const [showScreenAddModal, setShowScreenAddModal] = React.useState(false);
+            const [selectedSequenceScreenId, setSelectedSequenceScreenId] = React.useState('');
+            const [isEditingSequence, setIsEditingSequence] = React.useState(false);
+            const [simulationResult, setSimulationResult] = React.useState(null);
+            const [screenSearchQuery, setScreenSearchQuery] = React.useState('');
+            const [showSearchDropdown, setShowSearchDropdown] = React.useState(false);
+
+            // 프로젝트 목록
+            const projects = ['프로젝트A', '프로젝트B', '프로젝트C'];
+
+            // 메뉴 데이터 (트리 구조)
+            const [menuData, setMenuData] = React.useState([
+                {
+                    id: 1,
+                    level: 'lv1',
+                    name: '메인메뉴',
+                    method: 'CSS Selector',
+                    selector: '#main-menu',
+                    lastModified: '2025-06-10',
+                    children: [
+                        {
+                            id: 2,
+                            level: 'lv2',
+                            name: '사용자관리',
+                            method: 'XPath',
+                            selector: '//div[@class="user-menu"]',
+                            lastModified: '2025-06-09',
+                            children: [
+                                {
+                                    id: 3,
+                                    level: 'lv3',
+                                    name: '사용자조회',
+                                    method: 'CSS Selector',
+                                    selector: '.user-search-btn',
+                                    lastModified: '2025-06-08',
+                                    children: []
+                                }
+                            ]
+                        },
+                        {
+                            id: 4,
+                            level: 'lv2',
+                            name: '시스템관리',
+                            method: 'Script',
+                            selector: 'document.querySelector(".system-menu").click()',
+                            lastModified: '2025-06-07',
+                            children: []
+                        }
+                    ]
+                }
+            ]);
+
+            // 새 메뉴 추가 상태
+            const [newMenu, setNewMenu] = React.useState({
+                level: 'lv1',
+                name: '',
+                method: 'CSS Selector',
+                selector: ''
+            });
+
+            // 화면-메뉴 매핑 데이터
+            const [screenMappings, setScreenMappings] = React.useState([
+                {
+                    id: 1,
+                    screenId: 'USER_001',
+                    screenName: '사용자조회',
+                    connectedMenu: { id: 3, level: 'lv3', name: '사용자조회', path: 'lv1>lv2>lv3' },
+                    lastModified: '2025-06-10'
+                },
+                {
+                    id: 2,
+                    screenId: 'DEPOSIT_001',
+                    screenName: '입금관리조회',
+                    connectedMenu: { id: 4, level: 'lv2', name: '시스템관리', path: 'lv1>lv2' },
+                    lastModified: '2025-06-09'
+                }
+            ]);
+
+            // 새 화면 매핑 상태
+            const [newScreenMapping, setNewScreenMapping] = React.useState({
+                screenId: '',
+                screenName: '',
+                connectedMenu: null
+            });
+
+            // 진입방식 수정 상태
+            const [editingMenu, setEditingMenu] = React.useState(null);
+
+            // 메뉴 선택 핸들러
+            const handleMenuSelect = (menu) => {
+                setSelectedMenu(menu);
+                setEditingMenu({...menu});
+            };
+
+            // 메뉴 수정 저장
+            const handleSaveEdit = () => {
+                // 실제로는 API 호출
+                console.log('메뉴 수정 저장:', editingMenu);
+                setSelectedMenu(null);
+                setEditingMenu(null);
+            };
+
+            // 새 메뉴 추가
+            const handleAddMenu = () => {
+                const newId = Math.max(...getAllMenuIds(menuData)) + 1;
+                const newMenuItem = {
+                    id: newId,
+                    level: newMenu.level,
+                    name: newMenu.name,
+                    method: newMenu.method,
+                    selector: newMenu.selector,
+                    lastModified: new Date().toISOString().split('T')[0],
+                    children: []
+                };
+                
+                console.log('새 메뉴 추가:', newMenuItem);
+                setShowAddModal(false);
+                setNewMenu({ level: 'lv1', name: '', method: 'CSS Selector', selector: '' });
+            };
+
+            // Excel 다운로드 핸들러
+            const handleExcelDownload = () => {
+                // 메뉴 데이터를 평면화
+                const flattenMenuData = (menus, parentPath = '') => {
+                    let result = [];
+                    menus.forEach(menu => {
+                        const currentPath = parentPath ? `${parentPath} > ${menu.name}` : menu.name;
+                        result.push({
+                            '메뉴 경로': currentPath,
+                            '메뉴 레벨': menu.level,
+                            '메뉴명': menu.name,
+                            '진입방식': menu.method,
+                            '선택자/스크립트': menu.selector,
+                            '최종수정일': menu.lastModified
+                        });
+                        if (menu.children && menu.children.length > 0) {
+                            result = result.concat(flattenMenuData(menu.children, currentPath));
+                        }
+                    });
+                    return result;
+                };
+
+                const excelData = flattenMenuData(menuData);
+                
+                // CSV 형태로 다운로드 (실제 환경에서는 Excel 라이브러리 사용)
+                const csvContent = [
+                    ['메뉴 경로', '메뉴 레벨', '메뉴명', '진입방식', '선택자/스크립트', '최종수정일'].join(','),
+                    ...excelData.map(row => Object.values(row).map(value => `"${value}"`).join(','))
+                ].join('\n');
+
+                const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `메뉴구조도_${selectedProject}_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                console.log('Excel 다운로드 완료');
+            };
+
+            // Excel 업로드 핸들러
+            const handleExcelUpload = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        // 실제 환경에서는 Excel 파서 라이브러리 사용
+                        const text = e.target.result;
+                        console.log('업로드된 파일 내용:', text);
+                        
+                        // 예시: CSV 파싱 후 메뉴 데이터 구조로 변환
+                        alert(`Excel 파일 업로드 완료: ${file.name}\n실제 환경에서는 파일을 파싱하여 메뉴 데이터를 업데이트합니다.`);
+                        
+                        // 파일 input 초기화
+                        event.target.value = '';
+                    } catch (error) {
+                        console.error('Excel 파일 처리 중 오류:', error);
+                        alert('Excel 파일 처리 중 오류가 발생했습니다.');
+                    }
+                };
+                reader.readAsText(file);
+            };
+
+            // 모든 메뉴 ID 수집 (재귀)
+            const getAllMenuIds = (menus) => {
+                let ids = [];
+                menus.forEach(menu => {
+                    ids.push(menu.id);
+                    if (menu.children && menu.children.length > 0) {
+                        ids = ids.concat(getAllMenuIds(menu.children));
+                    }
+                });
+                return ids;
+            };
+
+            // 매핑용 메뉴 트리 렌더링
+            const renderMenuTreeForMapping = (menus, depth = 0, parentPath = []) => {
+                return menus.map(menu => {
+                    const currentPath = [...parentPath, menu.name];
+                    const menuPath = currentPath.join(' > ');
+                    
+                    return (
+                        <div key={menu.id} style={{marginLeft: `${depth * 20}px`}}>
+                            <div 
+                                className="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                onClick={() => handleScreenMenuConnect(menu, menuPath)}
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <span className={`px-2 py-1 text-xs font-medium rounded ${
+                                        menu.level === 'lv1' ? 'bg-blue-100 text-blue-800' :
+                                        menu.level === 'lv2' ? 'bg-green-100 text-green-800' :
+                                        'bg-purple-100 text-purple-800'
+                                    }`}>
+                                        {menu.level}
+                                    </span>
+                                    <span className="text-sm text-gray-900">{menu.name}</span>
+                                </div>
+                                <i className="fas fa-plus text-blue-500 text-xs"></i>
+                            </div>
+                            {menu.children && menu.children.length > 0 && renderMenuTreeForMapping(menu.children, depth + 1, currentPath)}
+                        </div>
+                    );
+                });
+            };
+
+            // 새 매핑 추가용 메뉴 트리 렌더링
+            const renderMenuTreeForNewMapping = (menus, depth = 0, parentPath = []) => {
+                return menus.map(menu => {
+                    const currentPath = [...parentPath, menu.name];
+                    const menuPath = currentPath.join(' > ');
+                    
+                    return (
+                        <div key={menu.id} style={{marginLeft: `${depth * 20}px`}}>
+                            <div 
+                                className="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                onClick={() => setNewScreenMapping({...newScreenMapping, connectedMenu: {...menu, path: menuPath}})}
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <span className={`px-2 py-1 text-xs font-medium rounded ${
+                                        menu.level === 'lv1' ? 'bg-blue-100 text-blue-800' :
+                                        menu.level === 'lv2' ? 'bg-green-100 text-green-800' :
+                                        'bg-purple-100 text-purple-800'
+                                    }`}>
+                                        {menu.level}
+                                    </span>
+                                    <span className="text-sm text-gray-900">{menu.name}</span>
+                                </div>
+                                <i className="fas fa-plus text-blue-500 text-xs"></i>
+                            </div>
+                            {menu.children && menu.children.length > 0 && renderMenuTreeForNewMapping(menu.children, depth + 1, currentPath)}
+                        </div>
+                    );
+                });
+            };
+
+            // 시퀀스 편집용 메뉴 트리 렌더링
+            const renderMenuTreeForSequenceEdit = (menus, depth = 0, parentPath = []) => {
+                return menus.map(menu => {
+                    const currentPath = [...parentPath, menu.name];
+                    
+                    return (
+                        <div key={menu.id} style={{marginLeft: `${depth * 20}px`}}>
+                            <div 
+                                className="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                onClick={() => handleSequenceMenuChange(menu.id)}
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <span className={`px-2 py-1 text-xs font-medium rounded ${
+                                        menu.level === 'lv1' ? 'bg-blue-100 text-blue-800' :
+                                        menu.level === 'lv2' ? 'bg-green-100 text-green-800' :
+                                        'bg-purple-100 text-purple-800'
+                                    }`}>
+                                        {menu.level}
+                                    </span>
+                                    <span className="text-sm text-gray-900">{menu.name}</span>
+                                </div>
+                                <i className="fas fa-chevron-right text-blue-500 text-xs"></i>
+                            </div>
+                            {menu.children && menu.children.length > 0 && renderMenuTreeForSequenceEdit(menu.children, depth + 1, currentPath)}
+                        </div>
+                    );
+                });
+            };
+
+            // 메뉴 트리 렌더링
+            const renderMenuTree = (menus, depth = 0) => {
+                return menus.map(menu => (
+                    <React.Fragment key={menu.id}>
+                        <tr 
+                            className={`hover:bg-gray-50 cursor-pointer ${selectedMenu?.id === menu.id ? 'bg-blue-50' : ''}`}
+                            onClick={() => handleMenuSelect(menu)}
+                        >
+                            <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center" style={{paddingLeft: `${depth * 20}px`}}>
+                                    {menu.children && menu.children.length > 0 && (
+                                        <i className="fas fa-chevron-right text-gray-400 mr-2"></i>
+                                    )}
+                                    <span className={`px-2 py-1 text-xs font-medium rounded ${
+                                        menu.level === 'lv1' ? 'bg-blue-100 text-blue-800' :
+                                        menu.level === 'lv2' ? 'bg-green-100 text-green-800' :
+                                        'bg-purple-100 text-purple-800'
+                                    }`}>
+                                        {menu.level}
+                                    </span>
+                                </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {menu.name}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    menu.method === 'CSS Selector' ? 'bg-blue-100 text-blue-800' :
+                                    menu.method === 'XPath' ? 'bg-green-100 text-green-800' :
+                                    'bg-orange-100 text-orange-800'
+                                }`}>
+                                    {menu.method}
+                                </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {menu.lastModified}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button className="text-blue-600 hover:text-blue-900">
+                                    <i className="fas fa-edit"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {menu.children && menu.children.length > 0 && renderMenuTree(menu.children, depth + 1)}
+                    </React.Fragment>
+                ));
+            };
+
+            // 화면 매핑 관련 핸들러
+            const handleMappingScreenSelect = (screen) => {
+                setSelectedScreen(screen);
+            };
+
+            const handleScreenMenuConnect = (menu, menuPath) => {
+                if (selectedScreen) {
+                    const updatedMappings = screenMappings.map(mapping => 
+                        mapping.id === selectedScreen.id 
+                            ? { ...mapping, connectedMenu: { ...menu, path: menuPath }, lastModified: new Date().toISOString().split('T')[0] }
+                            : mapping
+                    );
+                    setScreenMappings(updatedMappings);
+                    setSelectedScreen(null);
+                }
+            };
+
+            const handleAddScreenMapping = () => {
+                const newId = Math.max(...screenMappings.map(s => s.id)) + 1;
+                const newMapping = {
+                    id: newId,
+                    screenId: newScreenMapping.screenId,
+                    screenName: newScreenMapping.screenName,
+                    connectedMenu: newScreenMapping.connectedMenu,
+                    lastModified: new Date().toISOString().split('T')[0]
+                };
+                setScreenMappings([...screenMappings, newMapping]);
+                setShowScreenAddModal(false);
+                setNewScreenMapping({ screenId: '', screenName: '', connectedMenu: null });
+            };
+
+            // 메뉴 경로 생성 (재귀)
+            const getMenuPath = (menus, targetId, currentPath = []) => {
+                for (const menu of menus) {
+                    const newPath = [...currentPath, menu.name];
+                    if (menu.id === targetId) {
+                        return newPath.join(' > ');
+                    }
+                    if (menu.children && menu.children.length > 0) {
+                        const childPath = getMenuPath(menu.children, targetId, newPath);
+                        if (childPath) return childPath;
+                    }
+                }
+                return null;
+            };
+
+            // 검색 관련 핸들러
+            const handleScreenSearch = (query) => {
+                setScreenSearchQuery(query);
+                setShowSearchDropdown(query.length > 0);
+            };
+
+            const handleScreenSelect = (screenId, screenName) => {
+                setSelectedSequenceScreenId(screenId);
+                setScreenSearchQuery(`${screenId} - ${screenName}`);
+                setShowSearchDropdown(false);
+            };
+
+            const filteredScreens = screenMappings.filter(screen => 
+                screen.screenId.toLowerCase().includes(screenSearchQuery.toLowerCase()) ||
+                screen.screenName.toLowerCase().includes(screenSearchQuery.toLowerCase())
+            );
+
+            // 시퀀스 관련 핸들러
+            const handleSequenceMenuChange = (newMenuId) => {
+                const findMenuPath = (menus, targetId, path = []) => {
+                    for (const menu of menus) {
+                        const currentPath = [...path, menu];
+                        if (menu.id === targetId) {
+                            return currentPath;
+                        }
+                        if (menu.children && menu.children.length > 0) {
+                            const childPath = findMenuPath(menu.children, targetId, currentPath);
+                            if (childPath) return childPath;
+                        }
+                    }
+                    return null;
+                };
+
+                const menuPath = findMenuPath(menuData, newMenuId);
+                if (menuPath && selectedSequenceScreenId) {
+                    const updatedMappings = screenMappings.map(mapping => 
+                        mapping.screenId === selectedSequenceScreenId 
+                            ? { 
+                                ...mapping, 
+                                connectedMenu: { 
+                                    ...menuPath[menuPath.length - 1], 
+                                    path: menuPath.map(m => m.name).join(' > ') 
+                                },
+                                lastModified: new Date().toISOString().split('T')[0]
+                            }
+                            : mapping
+                    );
+                    setScreenMappings(updatedMappings);
+                    setIsEditingSequence(false);
+                }
+            };
+
+            const handleSimulation = async () => {
+                setSimulationResult({ status: 'running', message: '시뮬레이션 실행 중...' });
+                
+                // 시뮬레이션 로직 (예시)
+                setTimeout(() => {
+                    const success = Math.random() > 0.3; // 70% 성공률
+                    setSimulationResult({
+                        status: success ? 'success' : 'error',
+                        message: success ? '시뮬레이션이 성공적으로 완료되었습니다!' : '시뮬레이션 중 오류가 발생했습니다.'
+                    });
+                    
+                    // 3초 후 메시지 제거
+                    setTimeout(() => setSimulationResult(null), 3000);
+                }, 2000);
+            };
+
+            // 화면 진입 시퀀스 생성 (매핑 기반)
+            const generateSequence = (screenId) => {
+                const mapping = screenMappings.find(m => m.screenId === screenId);
+                if (mapping && mapping.connectedMenu) {
+                    // 실제로는 연결된 메뉴까지의 전체 경로를 구성
+                    return [
+                        { level: 'lv1', name: '메인메뉴', selector: '#main-menu', method: 'CSS Selector' },
+                        { level: 'lv2', name: '사용자관리', selector: '//div[@class="user-menu"]', method: 'XPath' },
+                        { level: 'lv3', name: '사용자조회', selector: '.user-search-btn', method: 'CSS Selector' }
+                    ];
+                }
+                return [
+                    { level: 'lv1', name: '메인메뉴', selector: '#main-menu', method: 'CSS Selector' },
+                    { level: 'lv2', name: '사용자관리', selector: '//div[@class="user-menu"]', method: 'XPath' },
+                    { level: 'lv3', name: '사용자조회', selector: '.user-search-btn', method: 'CSS Selector' }
+                ];
+            };
+
+            // 상세 시퀀스 생성 (카드용)
+            const generateDetailedSequence = (screenId) => {
+                const mapping = screenMappings.find(m => m.screenId === screenId);
+                if (mapping && mapping.connectedMenu) {
+                    // 실제로는 매핑 데이터를 기반으로 전체 경로 구성
+                    return [
+                        { 
+                            id: 1, level: 'lv1', name: '메인메뉴', 
+                            method: 'CSS Selector', selector: '#main-menu',
+                            status: 'ready', hasError: false 
+                        },
+                        { 
+                            id: 2, level: 'lv2', name: '사용자관리', 
+                            method: 'XPath', selector: '//div[@class="user-menu"]',
+                            status: 'ready', hasError: false 
+                        },
+                        { 
+                            id: 3, level: 'lv3', name: mapping.connectedMenu.name, 
+                            method: 'CSS Selector', selector: '.user-search-btn',
+                            status: 'ready', hasError: false, isLast: true
+                        }
+                    ];
+                }
+                return [];
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    {/* 헤더 */}
+                    <div className="bg-white border-b border-gray-200 px-6 py-4">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                <span>내용목록</span>
+                                <i className="fas fa-chevron-right text-xs"></i>
+                                <span className="font-medium text-gray-900">진입점 관리</span>
+                            </div>
+                            <button 
+                                onClick={() => window.location.href = 'index.html'}
+                                className="text-gray-600 hover:text-gray-900"
+                            >
+                                <i className="fas fa-arrow-left mr-2"></i>
+                                돌아가기
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="p-6">
+                        {/* 상단 영역 */}
+                        <div className="mb-6">
+                            <h1 className="text-2xl font-bold mb-4">진입점 관리</h1>
+                            
+                            {/* 프로젝트 선택 */}
+                            <div className="flex items-center space-x-4 mb-6">
+                                <label className="text-sm font-medium text-gray-700">프로젝트 선택:</label>
+                                <select
+                                    value={selectedProject}
+                                    onChange={(e) => setSelectedProject(e.target.value)}
+                                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    {projects.map(project => (
+                                        <option key={project} value={project}>{project}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* 탭 메뉴 */}
+                            <div className="border-b border-gray-200">
+                                <nav className="-mb-px flex space-x-8">
+                                    <button
+                                        onClick={() => setActiveTab('manage')}
+                                        className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                                            activeTab === 'manage'
+                                                ? 'border-blue-500 text-blue-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        <i className="fas fa-cog mr-2"></i>
+                                        진입방식 관리
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('mapping')}
+                                        className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                                            activeTab === 'mapping'
+                                                ? 'border-blue-500 text-blue-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        <i className="fas fa-link mr-2"></i>
+                                        화면-메뉴 연결 관리
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('sequence')}
+                                        className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                                            activeTab === 'sequence'
+                                                ? 'border-blue-500 text-blue-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        <i className="fas fa-sitemap mr-2"></i>
+                                        화면 진입 매핑 및 시퀀스
+                                    </button>
+                                </nav>
+                            </div>
+                        </div>
+
+                        {/* 탭 컨텐츠 */}
+                        {activeTab === 'manage' && (
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                {/* 메뉴 트리 테이블 */}
+                                <div className="lg:col-span-2">
+                                    <div className="bg-white rounded-lg shadow">
+                                        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                                            <h3 className="text-lg font-medium text-gray-900">메뉴 진입방식 목록</h3>
+                                            <div className="flex space-x-2">
+                                                <button
+                                                    onClick={handleExcelDownload}
+                                                    className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                                    title="메뉴구조도 Excel 다운로드"
+                                                >
+                                                    <i className="fas fa-download mr-2"></i>
+                                                    Excel 다운로드
+                                                </button>
+                                                <button
+                                                    onClick={() => document.getElementById('excel-upload').click()}
+                                                    className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                                    title="메뉴구조도 Excel 업로드"
+                                                >
+                                                    <i className="fas fa-upload mr-2"></i>
+                                                    Excel 업로드
+                                                </button>
+                                                <input
+                                                    id="excel-upload"
+                                                    type="file"
+                                                    accept=".xlsx,.xls,.csv"
+                                                    style={{display: 'none'}}
+                                                    onChange={handleExcelUpload}
+                                                />
+                                                <button
+                                                    onClick={() => setShowAddModal(true)}
+                                                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                                                >
+                                                    <i className="fas fa-plus mr-2"></i>
+                                                    신규 추가
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            메뉴 레벨
+                                                        </th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            메뉴명
+                                                        </th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            진입방식
+                                                        </th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            최종수정일
+                                                        </th>
+                                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            수정
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {renderMenuTree(menuData)}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 진입방식 등록/수정 영역 */}
+                                <div className="lg:col-span-1">
+                                    {selectedMenu ? (
+                                        <div className="bg-white rounded-lg shadow p-6">
+                                            <h3 className="text-lg font-medium text-gray-900 mb-4">진입방식 수정</h3>
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">메뉴명</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editingMenu?.name || ''}
+                                                        onChange={(e) => setEditingMenu({...editingMenu, name: e.target.value})}
+                                                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">진입방식</label>
+                                                    <select
+                                                        value={editingMenu?.method || ''}
+                                                        onChange={(e) => setEditingMenu({...editingMenu, method: e.target.value})}
+                                                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                                                    >
+                                                        <option value="CSS Selector">CSS Selector</option>
+                                                        <option value="XPath">XPath</option>
+                                                        <option value="Script">Script</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">선택자/스크립트</label>
+                                                    <textarea
+                                                        value={editingMenu?.selector || ''}
+                                                        onChange={(e) => setEditingMenu({...editingMenu, selector: e.target.value})}
+                                                        rows={4}
+                                                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                                                        placeholder="CSS 선택자, XPath, 또는 스크립트를 입력하세요"
+                                                    />
+                                                </div>
+                                                <div className="flex space-x-2">
+                                                    <button
+                                                        onClick={handleSaveEdit}
+                                                        className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
+                                                    >
+                                                        저장
+                                                    </button>
+                                                    <button
+                                                        onClick={() => console.log('테스트 실행')}
+                                                        className="flex-1 bg-green-600 text-white px-4 py-2 rounded-md text-sm hover:bg-green-700"
+                                                    >
+                                                        테스트 실행
+                                                    </button>
+                                                </div>
+                                                <button
+                                                    onClick={() => {setSelectedMenu(null); setEditingMenu(null);}}
+                                                    className="w-full bg-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm hover:bg-gray-400"
+                                                >
+                                                    취소
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-white rounded-lg shadow p-6">
+                                            <div className="text-center text-gray-500">
+                                                <i className="fas fa-mouse-pointer text-3xl mb-4"></i>
+                                                <p>수정할 메뉴를 선택해주세요</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'mapping' && (
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                {/* 화면ID 리스트 테이블 */}
+                                <div className="lg:col-span-2">
+                                    <div className="bg-white rounded-lg shadow">
+                                        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                                            <h3 className="text-lg font-medium text-gray-900">화면-메뉴 매핑 목록</h3>
+                                            <button
+                                                onClick={() => setShowScreenAddModal(true)}
+                                                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                                            >
+                                                <i className="fas fa-plus mr-2"></i>
+                                                화면 매핑 추가
+                                            </button>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            화면ID
+                                                        </th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            화면명
+                                                        </th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            연결된 마지막 메뉴
+                                                        </th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            최종수정일
+                                                        </th>
+                                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            수정
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {screenMappings.map(screen => (
+                                                        <tr 
+                                                            key={screen.id}
+                                                            className={`hover:bg-gray-50 cursor-pointer ${selectedScreen?.id === screen.id ? 'bg-blue-50' : ''}`}
+                                                            onClick={() => handleMappingScreenSelect(screen)}
+                                                        >
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                                {screen.screenId}
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                                {screen.screenName}
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                                {screen.connectedMenu ? (
+                                                                    <div>
+                                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                                            screen.connectedMenu.level === 'lv1' ? 'bg-blue-100 text-blue-800' :
+                                                                            screen.connectedMenu.level === 'lv2' ? 'bg-green-100 text-green-800' :
+                                                                            'bg-purple-100 text-purple-800'
+                                                                        }`}>
+                                                                            {screen.connectedMenu.level}
+                                                                        </span>
+                                                                        <div className="text-xs text-gray-500 mt-1">{screen.connectedMenu.name}</div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-gray-400">미연결</span>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                {screen.lastModified}
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                                <button className="text-blue-600 hover:text-blue-900">
+                                                                    <i className="fas fa-edit"></i>
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 메뉴 연결 영역 */}
+                                <div className="lg:col-span-1">
+                                    {selectedScreen ? (
+                                        <div className="bg-white rounded-lg shadow p-6">
+                                            <h3 className="text-lg font-medium text-gray-900 mb-4">메뉴 연결</h3>
+                                            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                                                <div className="text-sm font-medium text-blue-900">선택된 화면</div>
+                                                <div className="text-xs text-blue-700">{selectedScreen.screenId} - {selectedScreen.screenName}</div>
+                                            </div>
+                                            
+                                            <div className="space-y-3">
+                                                <h4 className="text-sm font-medium text-gray-700">연결할 메뉴 선택:</h4>
+                                                <div className="max-h-80 overflow-y-auto border rounded-lg p-3">
+                                                    {renderMenuTreeForMapping(menuData)}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-white rounded-lg shadow p-6">
+                                            <div className="text-center text-gray-500">
+                                                <i className="fas fa-link text-3xl mb-4"></i>
+                                                <p>연결할 화면을 선택해주세요</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'sequence' && (
+                            <div className="space-y-6">
+                                {/* 상단 화면ID 선택 및 시뮬레이션 영역 */}
+                                <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h3 className="text-lg font-medium text-gray-900">화면 진입 매핑 및 시퀀스</h3>
+                                        {selectedSequenceScreenId && (
+                                            <div className="flex space-x-3">
+                                                <button
+                                                    onClick={() => console.log('시퀀스 저장')}
+                                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                                                >
+                                                    <i className="fas fa-save mr-2"></i>
+                                                    저장
+                                                </button>
+                                                <button
+                                                    onClick={handleSimulation}
+                                                    disabled={simulationResult?.status === 'running'}
+                                                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm disabled:opacity-50"
+                                                >
+                                                    <i className="fas fa-play mr-2"></i>
+                                                    {simulationResult?.status === 'running' ? '실행 중...' : '시뮬레이션 실행'}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="flex space-x-4 items-center">
+                                        <label className="text-sm font-medium text-gray-700">화면ID 검색:</label>
+                                        <div className="relative min-w-80">
+                                            <input
+                                                type="text"
+                                                value={screenSearchQuery}
+                                                onChange={(e) => handleScreenSearch(e.target.value)}
+                                                onFocus={() => setShowSearchDropdown(screenSearchQuery.length > 0)}
+                                                onBlur={() => setTimeout(() => setShowSearchDropdown(false), 150)}
+                                                placeholder="화면ID 또는 화면명을 입력하세요 (예: USER_001)"
+                                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                            <i className="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+                                            
+                                            {/* 검색 드롭다운 */}
+                                            {showSearchDropdown && filteredScreens.length > 0 && (
+                                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                                    {filteredScreens.map(screen => (
+                                                        <div
+                                                            key={screen.screenId}
+                                                            className="px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                                            onClick={() => handleScreenSelect(screen.screenId, screen.screenName)}
+                                                        >
+                                                            <div className="font-medium text-gray-900">{screen.screenId}</div>
+                                                            <div className="text-sm text-gray-500">{screen.screenName}</div>
+                                                            {screen.connectedMenu && (
+                                                                <div className="text-xs text-blue-600 mt-1">
+                                                                    연결됨: {screen.connectedMenu.name} ({screen.connectedMenu.level})
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            
+                                            {/* 검색 결과 없음 */}
+                                            {showSearchDropdown && screenSearchQuery.length > 0 && filteredScreens.length === 0 && (
+                                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                                                    <div className="px-3 py-4 text-center text-gray-500">
+                                                        <i className="fas fa-search text-2xl mb-2"></i>
+                                                        <div>검색 결과가 없습니다</div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        {selectedSequenceScreenId && (
+                                            <div className="text-sm text-gray-600">
+                                                <i className="fas fa-info-circle mr-1"></i>
+                                                매핑된 메뉴 시퀀스가 아래에 표시됩니다
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 시뮬레이션 결과 Toast */}
+                                    {simulationResult && (
+                                        <div className={`mt-4 p-4 rounded-lg flex items-center ${
+                                            simulationResult.status === 'success' ? 'bg-green-50 text-green-700' :
+                                            simulationResult.status === 'error' ? 'bg-red-50 text-red-700' :
+                                            'bg-blue-50 text-blue-700'
+                                        }`}>
+                                            <i className={`fas mr-3 ${
+                                                simulationResult.status === 'success' ? 'fa-check-circle' :
+                                                simulationResult.status === 'error' ? 'fa-exclamation-circle' :
+                                                'fa-spinner fa-spin'
+                                            }`}></i>
+                                            {simulationResult.message}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 메뉴 시퀀스 카드 영역 */}
+                                {selectedSequenceScreenId && (
+                                    <div className="bg-white rounded-lg shadow p-6">
+                                        <h4 className="text-md font-medium text-gray-900 mb-4">
+                                            진입 시퀀스 - {screenMappings.find(s => s.screenId === selectedSequenceScreenId)?.screenName}
+                                        </h4>
+                                        
+                                        <div className="space-y-4">
+                                            {generateDetailedSequence(selectedSequenceScreenId).length > 0 ? (
+                                                <div className="flex items-center overflow-x-auto pb-4">
+                                                    {generateDetailedSequence(selectedSequenceScreenId).map((step, index) => (
+                                                        <React.Fragment key={step.id}>
+                                                            {/* 메뉴 카드 */}
+                                                            <div className={`flex-shrink-0 w-72 bg-gray-50 rounded-lg p-4 border-2 ${
+                                                                step.hasError ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                                                            }`}>
+                                                                <div className="flex justify-between items-start mb-3">
+                                                                    <div className="flex items-center space-x-2">
+                                                                        <span className={`px-2 py-1 text-xs font-medium rounded ${
+                                                                            step.level === 'lv1' ? 'bg-blue-100 text-blue-800' :
+                                                                            step.level === 'lv2' ? 'bg-green-100 text-green-800' :
+                                                                            'bg-purple-100 text-purple-800'
+                                                                        }`}>
+                                                                            {step.level}
+                                                                        </span>
+                                                                        {step.hasError && (
+                                                                            <i className="fas fa-exclamation-triangle text-red-500" title="진입방식 오류"></i>
+                                                                        )}
+                                                                    </div>
+                                                                    {step.isLast && (
+                                                                        <button
+                                                                            onClick={() => setIsEditingSequence(true)}
+                                                                            className="text-blue-600 hover:text-blue-800 text-sm"
+                                                                            title="메뉴 변경"
+                                                                        >
+                                                                            <i className="fas fa-edit"></i>
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                                
+                                                                <div className="space-y-2">
+                                                                    <div className="font-medium text-gray-900">{step.name}</div>
+                                                                    <div className="text-sm text-gray-600">
+                                                                        <div className="flex items-center space-x-2">
+                                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                                                                step.method === 'CSS Selector' ? 'bg-blue-100 text-blue-800' :
+                                                                                step.method === 'XPath' ? 'bg-green-100 text-green-800' :
+                                                                                'bg-orange-100 text-orange-800'
+                                                                            }`}>
+                                                                                {step.method}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="mt-1 text-xs text-gray-500 font-mono break-all">
+                                                                            {step.selector}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            {/* 화살표 */}
+                                                            {index < generateDetailedSequence(selectedSequenceScreenId).length - 1 && (
+                                                                <div className="flex-shrink-0 px-4">
+                                                                    <i className="fas fa-arrow-right text-gray-400 text-xl"></i>
+                                                                </div>
+                                                            )}
+                                                        </React.Fragment>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-8 text-gray-500">
+                                                    <i className="fas fa-exclamation-circle text-3xl mb-4"></i>
+                                                    <p>선택한 화면에 대한 메뉴 매핑이 없습니다.</p>
+                                                    <p className="text-sm mt-2">"화면-메뉴 연결 관리" 탭에서 먼저 매핑을 설정해주세요.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {/* 메뉴 변경 모달 */}
+                                {isEditingSequence && (
+                                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                                        <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                                            <div className="mt-3">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <h3 className="text-lg font-medium text-gray-900">마지막 메뉴 변경</h3>
+                                                    <button
+                                                        onClick={() => setIsEditingSequence(false)}
+                                                        className="text-gray-400 hover:text-gray-600"
+                                                    >
+                                                        <i className="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                                
+                                                <div className="space-y-4">
+                                                    <div className="text-sm text-gray-600">
+                                                        새로운 마지막 메뉴를 선택하면 전체 시퀀스가 자동으로 업데이트됩니다.
+                                                    </div>
+                                                    <div className="max-h-80 overflow-y-auto border rounded-lg p-3">
+                                                        {renderMenuTreeForSequenceEdit(menuData)}
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="flex justify-end space-x-2 mt-6">
+                                                    <button
+                                                        onClick={() => setIsEditingSequence(false)}
+                                                        className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                                                    >
+                                                        취소
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 신규 메뉴 추가 모달 */}
+                    {showAddModal && (
+                        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                                <div className="mt-3">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-medium text-gray-900">신규 메뉴 진입방식 추가</h3>
+                                        <button
+                                            onClick={() => setShowAddModal(false)}
+                                            className="text-gray-400 hover:text-gray-600"
+                                        >
+                                            <i className="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">메뉴 레벨</label>
+                                            <select
+                                                value={newMenu.level}
+                                                onChange={(e) => setNewMenu({...newMenu, level: e.target.value})}
+                                                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                                            >
+                                                <option value="lv1">lv1</option>
+                                                <option value="lv2">lv2</option>
+                                                <option value="lv3">lv3</option>
+                                                <option value="lv4">lv4</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">메뉴명</label>
+                                            <input
+                                                type="text"
+                                                value={newMenu.name}
+                                                onChange={(e) => setNewMenu({...newMenu, name: e.target.value})}
+                                                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                                                placeholder="메뉴명을 입력하세요"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">진입방식</label>
+                                            <select
+                                                value={newMenu.method}
+                                                onChange={(e) => setNewMenu({...newMenu, method: e.target.value})}
+                                                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                                            >
+                                                <option value="CSS Selector">CSS Selector</option>
+                                                <option value="XPath">XPath</option>
+                                                <option value="Script">Script</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">선택자/스크립트</label>
+                                            <textarea
+                                                value={newMenu.selector}
+                                                onChange={(e) => setNewMenu({...newMenu, selector: e.target.value})}
+                                                rows={3}
+                                                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                                                placeholder="CSS 선택자, XPath, 또는 스크립트를 입력하세요"
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex justify-end space-x-2 mt-6">
+                                        <button
+                                            onClick={() => setShowAddModal(false)}
+                                            className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                                        >
+                                            취소
+                                        </button>
+                                        <button
+                                            onClick={handleAddMenu}
+                                            disabled={!newMenu.name || !newMenu.selector}
+                                            className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            추가
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 화면 매핑 추가 모달 */}
+                    {showScreenAddModal && (
+                        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                                <div className="mt-3">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-medium text-gray-900">새 화면-메뉴 매핑 추가</h3>
+                                        <button
+                                            onClick={() => setShowScreenAddModal(false)}
+                                            className="text-gray-400 hover:text-gray-600"
+                                        >
+                                            <i className="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">화면ID</label>
+                                            <input
+                                                type="text"
+                                                value={newScreenMapping.screenId}
+                                                onChange={(e) => setNewScreenMapping({...newScreenMapping, screenId: e.target.value})}
+                                                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                                                placeholder="화면ID를 입력하세요 (예: USER_001)"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">화면명</label>
+                                            <input
+                                                type="text"
+                                                value={newScreenMapping.screenName}
+                                                onChange={(e) => setNewScreenMapping({...newScreenMapping, screenName: e.target.value})}
+                                                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                                                placeholder="화면명을 입력하세요"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">연결할 메뉴 선택</label>
+                                            <div className="border border-gray-300 rounded-md p-3 max-h-60 overflow-y-auto">
+                                                {renderMenuTreeForNewMapping(menuData)}
+                                            </div>
+                                            {newScreenMapping.connectedMenu && (
+                                                <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
+                                                    선택됨: <span className="font-medium">{newScreenMapping.connectedMenu.name}</span>
+                                                    <span className="text-gray-500 ml-2">({newScreenMapping.connectedMenu.level})</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex justify-end space-x-2 mt-6">
+                                        <button
+                                            onClick={() => setShowScreenAddModal(false)}
+                                            className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                                        >
+                                            취소
+                                        </button>
+                                        <button
+                                            onClick={handleAddScreenMapping}
+                                            disabled={!newScreenMapping.screenId || !newScreenMapping.screenName || !newScreenMapping.connectedMenu}
+                                            className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            추가
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // React 로딩 대기 및 렌더링
+        function runAppWhenReactReady() {
+            if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined') {
+                const root = ReactDOM.createRoot(document.getElementById('root'));
+                root.render(React.createElement(EntryPointManager));
+            } else {
+                setTimeout(runAppWhenReactReady, 100);
+            }
+        }
+
+        // 페이지 로드 완료 후 실행
+        window.onload = function() {
+            runAppWhenReactReady();
+        };
+    </script>
+</body>
+</html>
