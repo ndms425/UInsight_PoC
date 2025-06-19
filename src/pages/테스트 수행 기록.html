@@ -25,7 +25,7 @@
             // 연관화면 상태
             const [relatedScreens, setRelatedScreens] = React.useState([
                 { id: 1, name: '요구사항정의_메인', type: 'Main', active: false },
-                { id: 2, name: '요구사항_조회', type: 'Popup', active: false }
+                { id: 2, name: '요구사항_조회팝업', type: 'Popup', active: false }
             ]);
             const [showAddScreenModal, setShowAddScreenModal] = React.useState(false);
             const [newScreenName, setNewScreenName] = React.useState('');
@@ -35,7 +35,7 @@
             // 추천 연관화면 리스트 (고정)
             const recommendedScreens = [
                 { id: 'rec1', name: '요구사항정의_메인', type: 'Main' },
-                { id: 'rec2', name: '요구사항_조회', type: 'Popup' },
+                { id: 'rec2', name: '요구사항_조회팝업', type: 'Popup' },
                 { id: 'rec3', name: '로그인_메인', type: 'Main' },
                 { id: 'rec4', name: '사용자_조회', type: 'Sub' },
                 { id: 'rec5', name: '대시보드_메인', type: 'Main' },
@@ -200,7 +200,7 @@
                             <h1 className="text-2xl font-bold mb-2">테스트 수행 기록</h1>
                             <div className="flex items-center space-x-2">
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-base font-semibold bg-gray-100 text-gray-800">
-                                    요구사항정의_팝업
+                                    요구사항정의_탭1
                                 </span>
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                     Sub
