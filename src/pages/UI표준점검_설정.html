@@ -4,585 +4,756 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>UI 표준 점검 설정</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <style>
+    /* Reset & Base */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    
+    /* Layout */
+    .min-h-screen { min-height: 100vh; }
+    .max-w-7xl { max-width: 80rem; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .flex { display: flex; }
+    .grid { display: grid; }
+    .hidden { display: none; }
+    .block { display: block; }
+    .inline-flex { display: inline-flex; }
+    .grid-cols-12 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .col-span-3 { grid-column: span 3 / span 3; }
+    .col-span-6 { grid-column: span 6 / span 6; }
+    .col-span-9 { grid-column: span 9 / span 9; }
+    .gap-2 { gap: 0.5rem; }
+    .gap-4 { gap: 1rem; }
+    .gap-6 { gap: 1.5rem; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .space-x-2 > * + * { margin-left: 0.5rem; }
+    .space-x-3 > * + * { margin-left: 0.75rem; }
+    .space-x-4 > * + * { margin-left: 1rem; }
+    .space-y-2 > * + * { margin-top: 0.5rem; }
+    .space-y-3 > * + * { margin-top: 0.75rem; }
+    .space-y-4 > * + * { margin-top: 1rem; }
+    .space-y-6 > * + * { margin-top: 1.5rem; }
+    .flex-1 { flex: 1 1 0%; }
+    .flex-wrap { flex-wrap: wrap; }
+
+    /* Colors */
+    .bg-gray-50 { background-color: #f9fafb; }
+    .bg-white { background-color: #ffffff; }
+    .bg-blue-50 { background-color: #eff6ff; }
+    .bg-blue-100 { background-color: #dbeafe; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .bg-blue-700 { background-color: #1d4ed8; }
+    .bg-green-50 { background-color: #f0fdf4; }
+    .bg-yellow-50 { background-color: #fefce8; }
+    .bg-purple-50 { background-color: #faf5ff; }
+    .bg-gray-100 { background-color: #f3f4f6; }
+    .bg-gray-200 { background-color: #e5e7eb; }
+    .text-white { color: #ffffff; }
+    .text-gray-600 { color: #4b5563; }
+    .text-gray-700 { color: #374151; }
+    .text-gray-900 { color: #111827; }
+    .text-blue-600 { color: #2563eb; }
+    .text-blue-700 { color: #1d4ed8; }
+    .text-blue-800 { color: #1e40af; }
+    .text-blue-900 { color: #1e3a8a; }
+    .text-green-800 { color: #166534; }
+    .text-green-900 { color: #14532d; }
+    .text-yellow-800 { color: #92400e; }
+    .text-yellow-900 { color: #78350f; }
+    .text-purple-800 { color: #6b21a8; }
+    .text-purple-900 { color: #581c87; }
+    .text-red-500 { color: #ef4444; }
+    .text-red-700 { color: #b91c1c; }
+
+    /* Borders & Radius */
+    .border { border: 1px solid #e5e7eb; }
+    .border-gray-200 { border-color: #e5e7eb; }
+    .border-gray-300 { border-color: #d1d5db; }
+    .border-blue-200 { border-color: #bfdbfe; }
+    .rounded { border-radius: 0.25rem; }
+    .rounded-md { border-radius: 0.375rem; }
+    .rounded-lg { border-radius: 0.5rem; }
+    .rounded-full { border-radius: 9999px; }
+    .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+
+    /* Spacing */
+    .p-2 { padding: 0.5rem; }
+    .p-3 { padding: 0.75rem; }
+    .p-4 { padding: 1rem; }
+    .p-6 { padding: 1.5rem; }
+    .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .m-2 { margin: 0.5rem; }
+    .mb-1 { margin-bottom: 0.25rem; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .mb-3 { margin-bottom: 0.75rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+    .mb-8 { margin-bottom: 2rem; }
+    .mr-1 { margin-right: 0.25rem; }
+    .mr-2 { margin-right: 0.5rem; }
+    .mt-8 { margin-top: 2rem; }
+
+    /* Sizing */
+    .w-11 { width: 2.75rem; }
+    .w-20 { width: 5rem; }
+    .w-24 { width: 6rem; }
+    .w-full { width: 100%; }
+    .h-4 { height: 1rem; }
+    .h-6 { height: 1.5rem; }
+    .h-8 { height: 2rem; }
+    .h-24 { height: 6rem; }
+    .h-32 { height: 8rem; }
+    .h-full { height: 100%; }
+
+    /* Typography */
+    .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+    .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+    .font-medium { font-weight: 500; }
+    .font-semibold { font-weight: 600; }
+    .font-bold { font-weight: 700; }
+
+    /* Interactivity */
+    .cursor-pointer { cursor: pointer; }
+    .overflow-auto { overflow: auto; }
+    .transition-colors { transition-property: color, background-color, border-color; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+
+    /* Hover States */
+    .hover\:bg-blue-100:hover { background-color: #dbeafe; }
+    .hover\:bg-blue-200:hover { background-color: #bfdbfe; }
+    .hover\:bg-blue-700:hover { background-color: #1d4ed8; }
+    .hover\:bg-gray-100:hover { background-color: #f3f4f6; }
+    .hover\:bg-gray-200:hover { background-color: #e5e7eb; }
+    .hover\:text-gray-900:hover { color: #111827; }
+    .hover\:text-blue-700:hover { color: #1d4ed8; }
+    .hover\:text-red-700:hover { color: #b91c1c; }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #e5e7eb;
+      transition: .4s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #2563eb;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Form Styles */
+    input[type="text"], input[type="number"], input[type="url"], textarea, select {
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      padding: 0.5rem;
+      font-size: 0.875rem;
+      width: 100%;
+    }
+
+    input[type="text"]:focus, input[type="number"]:focus, input[type="url"]:focus, textarea:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    button {
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.5rem 1.5rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+
+    .btn-primary {
+      background-color: #2563eb;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: #1d4ed8;
+    }
+
+    .form-checkbox {
+      width: 1rem;
+      height: 1rem;
+      color: #2563eb;
+      border-radius: 0.25rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    pre {
+      background-color: #f9fafb;
+      padding: 1rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      overflow: auto;
+      border: 1px solid #e5e7eb;
+      height: 600px;
+    }
+
+    .active {
+      background-color: #eff6ff !important;
+      border-color: #bfdbfe !important;
+    }
+  </style>
 </head>
 <body>
-  <div id="root"></div>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script type="text/babel" data-presets="react">
-    function App() {
-      const [activeCheckItem, setActiveCheckItem] = React.useState('tabOrder');
-      
-      const checkItems = [
-        { id: 'tabOrder', name: 'Tab Order 점검', icon: 'fas fa-keyboard' },
-        { id: 'inputFormat', name: 'Input Box 문자 입력 Format 점검', icon: 'fas fa-edit' },
-        { id: 'maxLength', name: 'Max Length 점검', icon: 'fas fa-ruler-horizontal' },
-        { id: 'spellCheck', name: '맞춤법 점검', icon: 'fas fa-spell-check' }
-      ];
+  <div class="min-h-screen bg-gray-50 p-6">
+    <div class="max-w-7xl mx-auto">
+      <!-- 헤더 -->
+      <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center space-x-4">
+          <button onclick="window.location.href = 'index.html'" class="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors">
+            <i class="fas fa-arrow-left"></i>
+            <span>뒤로가기</span>
+          </button>
+          <h1 class="text-3xl font-bold text-gray-900">UI 표준 점검 설정</h1>
+        </div>
+        <button onclick="saveConfig()" class="btn-primary flex items-center space-x-2">
+          <i class="fas fa-save"></i>
+          <span>저장</span>
+        </button>
+      </div>
 
-      const [checkConfigs, setCheckConfigs] = React.useState({
-        tabOrder: {
-          enabled: true,
-          checkId: "TAB_ORDER_001",
-          functionName: "runTabOrderCheck",
-          selector: "input, button, select, textarea, a[href]",
-          description: "Tab 키를 통한 포커스 이동 순서가 논리적인지 검사합니다.",
-          guide: "Tab 순서는 화면의 논리적 흐름을 따라야 합니다. 일반적으로 좌상단에서 우하단 순서로 이동해야 합니다.",
-          rules: {
-            checkLogicalOrder: true,
-            allowSkipNavigation: true,
-            checkVisibleElementsOnly: true
-          }
-        },
-        inputFormat: {
-          enabled: true,
-          checkId: "INPUT_FORMAT_001",
-          functionName: "runFormatCheck",
-          selector: "input, textarea",
-          description: "입력 필드의 형식이 표준에 맞는지 검사합니다.",
-          guide: "이메일, 전화번호, 주민등록번호 등의 형식을 올바르게 검증해야 합니다.",
-          standard: [
-            {
-              label: "이메일",
-              keywords: ["이메일", "메일", "email", "e-mail"],
-              rules: {
-                format: "****@****.***",
-                regex: "^[\\w.-]+@[\\w.-]+\\.\\w+$"
-              }
-            },
-            {
-              label: "주민등록번호",
-              keywords: ["주민번호", "rrn", "resident"],
-              rules: {
-                format: "999999-9******",
-                length: 13
-              }
-            }
-          ]
-        },
-        maxLength: {
-          enabled: true,
-          checkId: "MAX_LENGTH_001",
-          functionName: "runMaxLengthCheck",
-          selector: "input[type='text'], textarea",
-          description: "입력 필드의 최대 길이 제한이 적절히 설정되었는지 검사합니다.",
-          guide: "각 입력 필드는 데이터베이스 컬럼 크기와 일치하는 maxlength 속성을 가져야 합니다.",
-          rules: {
-            checkMaxLengthAttribute: true,
-            defaultMaxLength: 255,
-            fieldTypes: {
-              name: 50,
-              email: 100,
-              phone: 20,
-              address: 200,
-              description: 1000
-            }
-          }
-        },
-        spellCheck: {
-          enabled: true,
-          checkId: "SPELL_CHECK_001",
-          functionName: "runSpellCheck",
-          selector: "label, button, .text-content",
-          description: "화면에 표시되는 텍스트의 맞춤법과 표기법을 검사합니다.",
-          guide: "공공기관 표준 맞춤법 및 표기법을 준수해야 합니다.",
-          rules: {
-            checkKoreanSpelling: true,
-            checkEnglishSpelling: true,
-            checkTerminology: true,
-            customDictionary: []
-          }
-        }
-      });
-
-      const updateCheckConfig = (checkItemId, field, value) => {
-        setCheckConfigs(prev => ({
-          ...prev,
-          [checkItemId]: {
-            ...prev[checkItemId],
-            [field]: value
-          }
-        }));
-      };
-
-      const updateCheckRule = (checkItemId, ruleKey, value) => {
-        setCheckConfigs(prev => ({
-          ...prev,
-          [checkItemId]: {
-            ...prev[checkItemId],
-            rules: {
-              ...prev[checkItemId].rules,
-              [ruleKey]: value
-            }
-          }
-        }));
-      };
-
-      const updateInputFormatStandard = (index, field, value) => {
-        setCheckConfigs(prev => ({
-          ...prev,
-          inputFormat: {
-            ...prev.inputFormat,
-            standard: prev.inputFormat.standard.map((item, i) => 
-              i === index ? { ...item, [field]: value } : item
-            )
-          }
-        }));
-      };
-
-      const addInputFormatStandard = () => {
-        const newStandard = {
-          label: "",
-          keywords: [""],
-          rules: {}
-        };
-        setCheckConfigs(prev => ({
-          ...prev,
-          inputFormat: {
-            ...prev.inputFormat,
-            standard: [...prev.inputFormat.standard, newStandard]
-          }
-        }));
-      };
-
-      const deleteInputFormatStandard = (index) => {
-        setCheckConfigs(prev => ({
-          ...prev,
-          inputFormat: {
-            ...prev.inputFormat,
-            standard: prev.inputFormat.standard.filter((_, i) => i !== index)
-          }
-        }));
-      };
-
-      const saveConfig = () => {
-        const configJson = JSON.stringify(checkConfigs, null, 2);
-        const blob = new Blob([configJson], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'ui-standard-check-config.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        alert('설정이 저장되었습니다.');
-      };
-
-      const currentConfig = checkConfigs[activeCheckItem];
-      const currentCheckItem = checkItems.find(item => item.id === activeCheckItem);
-
-      return (
-        <div className="min-h-screen bg-gray-50 p-6">
-          <div className="max-w-7xl mx-auto">
-            {/* 헤더 */}
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center space-x-4">
-                <button 
-                  onClick={() => window.location.href = 'index.html'}
-                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                  <i className="fas fa-arrow-left"></i>
-                  <span>뒤로가기</span>
-                </button>
-                <h1 className="text-3xl font-bold text-gray-900">UI 표준 점검 설정</h1>
-              </div>
-              <button 
-                onClick={saveConfig}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-              >
-                <i className="fas fa-save"></i>
-                <span>저장</span>
-              </button>
+      <div class="grid grid-cols-12 gap-6">
+        <!-- 왼쪽 사이드바 - 점검 항목 목록 -->
+        <div class="col-span-3">
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="mb-4">
+              <h3 class="font-semibold text-gray-900">점검 항목</h3>
             </div>
+            
+            <div class="space-y-2" id="checkItemsList">
+              <!-- JavaScript로 동적 생성 -->
+            </div>
+          </div>
+        </div>
 
-            <div className="grid grid-cols-12 gap-6">
-              {/* 왼쪽 사이드바 - 점검 항목 목록 */}
-              <div className="col-span-3">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                  <div className="mb-4">
-                    <h3 className="font-semibold text-gray-900">점검 항목</h3>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {checkItems.map((item) => (
-                      <div 
-                        key={item.id}
-                        onClick={() => setActiveCheckItem(item.id)}
-                        className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                          activeCheckItem === item.id 
-                            ? 'bg-blue-50 border-blue-200 border' 
-                            : 'bg-gray-50 hover:bg-gray-100 border border-transparent'
-                        }`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            activeCheckItem === item.id ? 'bg-blue-100' : 'bg-gray-200'
-                          }`}>
-                            <i className={`${item.icon} text-sm ${
-                              activeCheckItem === item.id ? 'text-blue-600' : 'text-gray-600'
-                            }`}></i>
-                          </div>
-                          <div>
-                            <div className="font-medium text-sm text-gray-900">
-                              {item.name}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 기본 설정 */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mt-4">
-                  <h3 className="font-semibold text-gray-900 mb-4">기본 설정</h3>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        사용여부
-                      </label>
-                      <label className="flex items-center">
-                        <input 
-                          type="checkbox" 
-                          checked={currentConfig.enabled} 
-                          onChange={(e) => updateCheckConfig(activeCheckItem, 'enabled', e.target.checked)}
-                          className="form-checkbox h-4 w-4 text-blue-600" 
-                        />
-                        <span className="ml-2 text-sm text-gray-700">활성화</span>
-                      </label>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        점검 ID
-                      </label>
-                      <input
-                        type="text"
-                        value={currentConfig.checkId}
-                        onChange={(e) => updateCheckConfig(activeCheckItem, 'checkId', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        함수명
-                      </label>
-                      <input
-                        type="text"
-                        value={currentConfig.functionName}
-                        onChange={(e) => updateCheckConfig(activeCheckItem, 'functionName', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        CSS 선택자
-                      </label>
-                      <input
-                        type="text"
-                        value={currentConfig.selector}
-                        onChange={(e) => updateCheckConfig(activeCheckItem, 'selector', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        점검 기준 상세
-                      </label>
-                      <textarea
-                        value={currentConfig.description}
-                        onChange={(e) => updateCheckConfig(activeCheckItem, 'description', e.target.value)}
-                        className="w-full h-20 p-2 border border-gray-300 rounded-md text-sm"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        표준 가이드
-                      </label>
-                      <textarea
-                        value={currentConfig.guide}
-                        onChange={(e) => updateCheckConfig(activeCheckItem, 'guide', e.target.value)}
-                        placeholder="개발자가 참고할 수 있는 표준 가이드 내용을 입력하세요."
-                        className="w-full h-32 p-2 border border-gray-300 rounded-md text-sm"
-                      />
-                    </div>
-                  </div>
-                </div>
+        <!-- 메인 콘텐츠 -->
+        <div class="col-span-9">
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="grid grid-cols-12 gap-6">
+              <!-- 왼쪽 콘텐츠 -->
+              <div class="col-span-6" id="mainContent">
+                <!-- JavaScript로 동적 생성 -->
               </div>
 
-              {/* 메인 콘텐츠 */}
-              <div className="col-span-9">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900 flex items-center space-x-3">
-                      <i className={`${currentCheckItem.icon} text-blue-600`}></i>
-                      <span>{currentCheckItem.name} 설정</span>
-                    </h2>
-                  </div>
-
-                  {/* Tab Order 점검 설정 */}
-                  {activeCheckItem === 'tabOrder' && (
-                    <div className="space-y-6">
-                      <div className="bg-blue-50 p-4 rounded-lg">
-                        <h3 className="font-medium text-blue-900 mb-2">Tab Order 점검이란?</h3>
-                        <p className="text-blue-800 text-sm">{currentConfig.description}</p>
-                      </div>
-                      
-                      <div className="space-y-4">
-                        <h4 className="font-medium text-gray-900">점검 규칙 설정</h4>
-                        <div className="grid grid-cols-1 gap-4">
-                          <label className="flex items-center">
-                            <input 
-                              type="checkbox" 
-                              checked={currentConfig.rules.checkLogicalOrder}
-                              onChange={(e) => updateCheckRule(activeCheckItem, 'checkLogicalOrder', e.target.checked)}
-                              className="form-checkbox h-4 w-4 text-blue-600 mr-2" 
-                            />
-                            <span className="text-sm">논리적 순서 확인</span>
-                          </label>
-                          <label className="flex items-center">
-                            <input 
-                              type="checkbox" 
-                              checked={currentConfig.rules.allowSkipNavigation}
-                              onChange={(e) => updateCheckRule(activeCheckItem, 'allowSkipNavigation', e.target.checked)}
-                              className="form-checkbox h-4 w-4 text-blue-600 mr-2" 
-                            />
-                            <span className="text-sm">건너뛰기 네비게이션 허용</span>
-                          </label>
-                          <label className="flex items-center">
-                            <input 
-                              type="checkbox" 
-                              checked={currentConfig.rules.checkVisibleElementsOnly}
-                              onChange={(e) => updateCheckRule(activeCheckItem, 'checkVisibleElementsOnly', e.target.checked)}
-                              className="form-checkbox h-4 w-4 text-blue-600 mr-2" 
-                            />
-                            <span className="text-sm">보이는 요소만 검사</span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Input Format 점검 설정 */}
-                  {activeCheckItem === 'inputFormat' && (
-                    <div className="space-y-6">
-                      <div className="bg-green-50 p-4 rounded-lg">
-                        <h3 className="font-medium text-green-900 mb-2">Input Format 점검이란?</h3>
-                        <p className="text-green-800 text-sm">{currentConfig.description}</p>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium text-gray-900">형식 표준 목록</h4>
-                          <button 
-                            onClick={addInputFormatStandard}
-                            className="text-blue-600 hover:text-blue-700 text-sm"
-                          >
-                            <i className="fas fa-plus mr-1"></i>형식 추가
-                          </button>
-                        </div>
-                        
-                        <div className="space-y-4">
-                          {currentConfig.standard.map((standard, index) => (
-                            <div key={index} className="border border-gray-200 rounded-lg p-4">
-                              <div className="flex items-center justify-between mb-3">
-                                <h5 className="font-medium text-gray-900">{standard.label || `형식 ${index + 1}`}</h5>
-                                <button 
-                                  onClick={() => deleteInputFormatStandard(index)}
-                                  className="text-red-500 hover:text-red-700 text-sm"
-                                >
-                                  <i className="fas fa-trash"></i>
-                                </button>
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-4 mb-3">
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">라벨</label>
-                                  <input
-                                    type="text"
-                                    value={standard.label}
-                                    onChange={(e) => updateInputFormatStandard(index, 'label', e.target.value)}
-                                    className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                                    placeholder="예: 이메일"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">키워드 (쉼표로 구분)</label>
-                                  <input
-                                    type="text"
-                                    value={standard.keywords.join(', ')}
-                                    onChange={(e) => updateInputFormatStandard(index, 'keywords', e.target.value.split(',').map(k => k.trim()))}
-                                    className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                                    placeholder="이메일, 메일, email"
-                                  />
-                                </div>
-                              </div>
-                              
-                              <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">검증 규칙</label>
-                                {Object.entries(standard.rules || {}).map(([ruleKey, ruleValue]) => (
-                                  <div key={ruleKey} className="flex items-center space-x-2">
-                                    <span className="w-20 text-sm font-medium text-gray-700">{ruleKey}:</span>
-                                    <input
-                                      type="text"
-                                      value={ruleValue}
-                                      onChange={(e) => {
-                                        const newStandard = {...standard};
-                                        newStandard.rules[ruleKey] = e.target.value;
-                                        updateInputFormatStandard(index, 'rules', newStandard.rules);
-                                      }}
-                                      className="flex-1 p-2 border border-gray-300 rounded-md text-sm"
-                                    />
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Max Length 점검 설정 */}
-                  {activeCheckItem === 'maxLength' && (
-                    <div className="space-y-6">
-                      <div className="bg-yellow-50 p-4 rounded-lg">
-                        <h3 className="font-medium text-yellow-900 mb-2">Max Length 점검이란?</h3>
-                        <p className="text-yellow-800 text-sm">{currentConfig.description}</p>
-                      </div>
-                      
-                      <div className="space-y-4">
-                        <h4 className="font-medium text-gray-900">길이 제한 설정</h4>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">기본 최대 길이</label>
-                            <input
-                              type="number"
-                              value={currentConfig.rules.defaultMaxLength}
-                              onChange={(e) => updateCheckRule(activeCheckItem, 'defaultMaxLength', parseInt(e.target.value))}
-                              className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                            />
-                          </div>
-                          <div>
-                            <label className="flex items-center">
-                              <input 
-                                type="checkbox" 
-                                checked={currentConfig.rules.checkMaxLengthAttribute}
-                                onChange={(e) => updateCheckRule(activeCheckItem, 'checkMaxLengthAttribute', e.target.checked)}
-                                className="form-checkbox h-4 w-4 text-blue-600 mr-2" 
-                              />
-                              <span className="text-sm">maxlength 속성 검사</span>
-                            </label>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <h5 className="font-medium text-gray-900 mb-2">필드 유형별 길이 설정</h5>
-                          <div className="space-y-2">
-                            {Object.entries(currentConfig.rules.fieldTypes).map(([fieldType, length]) => (
-                              <div key={fieldType} className="flex items-center space-x-2">
-                                <span className="w-24 text-sm font-medium text-gray-700">{fieldType}:</span>
-                                <input
-                                  type="number"
-                                  value={length}
-                                  onChange={(e) => {
-                                    const newFieldTypes = {...currentConfig.rules.fieldTypes};
-                                    newFieldTypes[fieldType] = parseInt(e.target.value);
-                                    updateCheckRule(activeCheckItem, 'fieldTypes', newFieldTypes);
-                                  }}
-                                  className="w-24 p-2 border border-gray-300 rounded-md text-sm"
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 맞춤법 점검 설정 */}
-                  {activeCheckItem === 'spellCheck' && (
-                    <div className="space-y-6">
-                      <div className="bg-purple-50 p-4 rounded-lg">
-                        <h3 className="font-medium text-purple-900 mb-2">맞춤법 점검이란?</h3>
-                        <p className="text-purple-800 text-sm">{currentConfig.description}</p>
-                      </div>
-                      
-                      <div className="space-y-4">
-                        <h4 className="font-medium text-gray-900">점검 옵션</h4>
-                        <div className="space-y-3">
-                          <label className="flex items-center">
-                            <input 
-                              type="checkbox" 
-                              checked={currentConfig.rules.checkKoreanSpelling}
-                              onChange={(e) => updateCheckRule(activeCheckItem, 'checkKoreanSpelling', e.target.checked)}
-                              className="form-checkbox h-4 w-4 text-blue-600 mr-2" 
-                            />
-                            <span className="text-sm">한국어 맞춤법 검사</span>
-                          </label>
-                          <label className="flex items-center">
-                            <input 
-                              type="checkbox" 
-                              checked={currentConfig.rules.checkEnglishSpelling}
-                              onChange={(e) => updateCheckRule(activeCheckItem, 'checkEnglishSpelling', e.target.checked)}
-                              className="form-checkbox h-4 w-4 text-blue-600 mr-2" 
-                            />
-                            <span className="text-sm">영어 맞춤법 검사</span>
-                          </label>
-                          <label className="flex items-center">
-                            <input 
-                              type="checkbox" 
-                              checked={currentConfig.rules.checkTerminology}
-                              onChange={(e) => updateCheckRule(activeCheckItem, 'checkTerminology', e.target.checked)}
-                              className="form-checkbox h-4 w-4 text-blue-600 mr-2" 
-                            />
-                            <span className="text-sm">전문 용어 검사</span>
-                          </label>
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">사용자 정의 사전</label>
-                          <textarea
-                            value={currentConfig.rules.customDictionary.join('\n')}
-                            onChange={(e) => updateCheckRule(activeCheckItem, 'customDictionary', e.target.value.split('\n').filter(word => word.trim()))}
-                            placeholder="한 줄에 하나씩 단어를 입력하세요"
-                            className="w-full h-32 p-2 border border-gray-300 rounded-md text-sm"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* JSON 미리보기 */}
-                  <div className="mt-8">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      JSON 설정 미리보기 - {currentCheckItem.name}
-                    </label>
-                    <pre className="bg-gray-50 p-4 rounded-md text-sm overflow-auto max-h-60 border">
-{JSON.stringify(currentConfig, null, 2)}
-                    </pre>
-                  </div>
-                </div>
+              <!-- 오른쪽 콘텐츠 - JSON 미리보기 -->
+              <div class="col-span-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2" id="jsonLabel">
+                  JSON 설정 미리보기
+                </label>
+                <pre id="jsonPreview"></pre>
               </div>
             </div>
           </div>
-
-
         </div>
-      );
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 전역 상태 관리
+    let activeCheckItem = 'tabOrder';
+    
+    const checkItems = [
+      { id: 'tabOrder', name: 'Tab Order 점검', icon: 'fas fa-keyboard' },
+      { id: 'inputFormat', name: 'Input Box 문자 입력 Format 점검', icon: 'fas fa-edit' },
+      { id: 'maxLength', name: 'Max Length 점검', icon: 'fas fa-ruler-horizontal' },
+      { id: 'spellCheck', name: '맞춤법 점검', icon: 'fas fa-spell-check' }
+    ];
+
+    let checkConfigs = {
+      tabOrder: {
+        enabled: true,
+        checkId: "TAB_ORDER_001",
+        functionName: "runTabOrderCheck",
+        selector: "input, button, select, textarea, a[href]",
+        activeSelectors: ["input", "button", "select", "textarea", "a[href]"],
+        description: "Tab 키를 통한 포커스 이동 순서가 논리적인지 검사합니다.",
+        guide: "Tab 순서는 화면의 논리적 흐름을 따라야 합니다. 일반적으로 좌상단에서 우하단 순서로 이동해야 합니다.",
+        guideUrl: "",
+        guideText: "",
+        rules: {
+          checkLogicalOrder: true,
+          allowSkipNavigation: true,
+          checkVisibleElementsOnly: true
+        }
+      },
+      inputFormat: {
+        enabled: true,
+        checkId: "INPUT_FORMAT_001",
+        functionName: "runFormatCheck",
+        selector: "input, textarea",
+        activeSelectors: ["input", "textarea"],
+        description: "입력 필드의 형식이 표준에 맞는지 검사합니다.",
+        guide: "이메일, 전화번호, 주민등록번호 등의 형식을 올바르게 검증해야 합니다.",
+        guideUrl: "",
+        guideText: "",
+        standard: [
+          {
+            label: "이메일",
+            keywords: ["이메일", "메일", "email", "e-mail"],
+            rules: {
+              format: "****@****.***",
+              regex: "^[\\w.-]+@[\\w.-]+\\.\\w+$"
+            }
+          },
+          {
+            label: "주민등록번호",
+            keywords: ["주민번호", "rrn", "resident"],
+            rules: {
+              format: "999999-9******",
+              length: 13
+            }
+          }
+        ]
+      },
+      maxLength: {
+        enabled: true,
+        checkId: "MAX_LENGTH_001",
+        functionName: "runMaxLengthCheck",
+        selector: "input[type='text'], textarea",
+        activeSelectors: ["input[type='text']", "textarea"],
+        description: "입력 필드의 최대 길이 제한이 적절히 설정되었는지 검사합니다.",
+        guide: "각 입력 필드는 데이터베이스 컬럼 크기와 일치하는 maxlength 속성을 가져야 합니다.",
+        guideUrl: "",
+        guideText: "",
+        rules: {
+          checkMaxLengthAttribute: true,
+          defaultMaxLength: 255,
+          fieldTypes: {
+            name: 50,
+            email: 100,
+            phone: 20,
+            address: 200,
+            description: 1000
+          }
+        }
+      },
+      spellCheck: {
+        enabled: true,
+        checkId: "SPELL_CHECK_001",
+        functionName: "runSpellCheck",
+        selector: "label, button, .text-content",
+        activeSelectors: ["label", "button", ".text-content"],
+        description: "화면에 표시되는 텍스트의 맞춤법과 표기법을 검사합니다.",
+        guide: "공공기관 표준 맞춤법 및 표기법을 준수해야 합니다.",
+        guideUrl: "",
+        guideText: "",
+        rules: {
+          checkKoreanSpelling: true,
+          checkEnglishSpelling: true,
+          checkTerminology: true,
+          customDictionary: []
+        }
+      }
+    };
+
+    // 유틸리티 함수들
+    function updateCheckConfig(checkItemId, field, value) {
+      checkConfigs[checkItemId][field] = value;
+      updateJsonPreview();
     }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+    function updateCheckRule(checkItemId, ruleKey, value) {
+      checkConfigs[checkItemId].rules[ruleKey] = value;
+      updateJsonPreview();
+    }
+
+    function toggleSelector(checkItemId, selector) {
+      const currentConfig = checkConfigs[checkItemId];
+      const activeSelectors = [...currentConfig.activeSelectors];
+      const index = activeSelectors.indexOf(selector);
+      
+      if (index > -1) {
+        activeSelectors.splice(index, 1);
+      } else {
+        activeSelectors.push(selector);
+      }
+      
+      checkConfigs[checkItemId].activeSelectors = activeSelectors;
+      renderMainContent();
+      updateJsonPreview();
+    }
+
+    function saveConfig() {
+      const configJson = JSON.stringify(checkConfigs, null, 2);
+      const blob = new Blob([configJson], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ui-standard-check-config.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      alert('설정이 저장되었습니다.');
+    }
+
+    // 렌더링 함수들
+    function renderCheckItemsList() {
+      const container = document.getElementById('checkItemsList');
+      container.innerHTML = checkItems.map(item => `
+        <div onclick="setActiveCheckItem('${item.id}')" 
+             class="p-3 rounded-lg cursor-pointer transition-colors ${
+               activeCheckItem === item.id 
+                 ? 'active border' 
+                 : 'bg-gray-50 hover:bg-gray-100 border border-transparent'
+             }" 
+             id="checkItem-${item.id}">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center ${
+                activeCheckItem === item.id ? 'bg-blue-100' : 'bg-gray-200'
+              }">
+                <i class="${item.icon} text-sm ${
+                  activeCheckItem === item.id ? 'text-blue-600' : 'text-gray-600'
+                }"></i>
+              </div>
+              <div>
+                <div class="font-medium text-sm text-gray-900">
+                  ${item.name}
+                </div>
+              </div>
+            </div>
+            <label class="toggle-switch" onclick="event.stopPropagation()">
+              <input type="checkbox" ${checkConfigs[item.id].enabled ? 'checked' : ''} 
+                     onchange="updateCheckConfig('${item.id}', 'enabled', this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderMainContent() {
+      const container = document.getElementById('mainContent');
+      const currentConfig = checkConfigs[activeCheckItem];
+      const currentCheckItem = checkItems.find(item => item.id === activeCheckItem);
+      
+      let content = '';
+      
+      // 점검 설명 섹션
+      const colors = {
+        tabOrder: { bg: 'bg-blue-50', text: 'text-blue-900', desc: 'text-blue-800' },
+        inputFormat: { bg: 'bg-green-50', text: 'text-green-900', desc: 'text-green-800' },
+        maxLength: { bg: 'bg-yellow-50', text: 'text-yellow-900', desc: 'text-yellow-800' },
+        spellCheck: { bg: 'bg-purple-50', text: 'text-purple-900', desc: 'text-purple-800' }
+      };
+      
+      const color = colors[activeCheckItem];
+      content += `
+        <div class="${color.bg} p-4 rounded-lg mb-6">
+          <h3 class="font-medium ${color.text} mb-2">${currentCheckItem.name}이란?</h3>
+          <p class="${color.desc} text-sm">${currentConfig.description}</p>
+        </div>
+      `;
+
+      // 점검 규칙 설정
+      content += `
+        <div class="space-y-6">
+          <div class="space-y-4">
+            <h4 class="font-medium text-gray-900">점검 규칙 설정</h4>
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-2">CSS 선택자</label>
+              <div class="flex flex-wrap gap-2 mb-4">
+                ${currentConfig.selector.split(',').map(selector => {
+                  const trimmedSelector = selector.trim();
+                  const isActive = currentConfig.activeSelectors?.includes(trimmedSelector);
+                  return `
+                    <span onclick="toggleSelector('${activeCheckItem}', '${trimmedSelector}')"
+                          class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium cursor-pointer transition-colors ${
+                            isActive 
+                              ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' 
+                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                          }">
+                      ${trimmedSelector}
+                    </span>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+      `;
+
+      // 각 점검 항목별 특화 설정
+      if (activeCheckItem === 'tabOrder') {
+        content += `
+          <div class="grid grid-cols-1 gap-4">
+            <label class="flex items-center">
+              <input type="checkbox" ${currentConfig.rules.checkLogicalOrder ? 'checked' : ''} 
+                     onchange="updateCheckRule('${activeCheckItem}', 'checkLogicalOrder', this.checked)"
+                     class="form-checkbox h-4 w-4 text-blue-600 mr-2">
+              <span class="text-sm">논리적 순서 확인</span>
+            </label>
+            <label class="flex items-center">
+              <input type="checkbox" ${currentConfig.rules.allowSkipNavigation ? 'checked' : ''} 
+                     onchange="updateCheckRule('${activeCheckItem}', 'allowSkipNavigation', this.checked)"
+                     class="form-checkbox h-4 w-4 text-blue-600 mr-2">
+              <span class="text-sm">건너뛰기 네비게이션 허용</span>
+            </label>
+            <label class="flex items-center">
+              <input type="checkbox" ${currentConfig.rules.checkVisibleElementsOnly ? 'checked' : ''} 
+                     onchange="updateCheckRule('${activeCheckItem}', 'checkVisibleElementsOnly', this.checked)"
+                     class="form-checkbox h-4 w-4 text-blue-600 mr-2">
+              <span class="text-sm">보이는 요소만 검사</span>
+            </label>
+          </div>
+        `;
+      } else if (activeCheckItem === 'inputFormat') {
+        content += `
+          <div class="flex items-center justify-between">
+            <h4 class="font-medium text-gray-900">형식 표준 목록</h4>
+            <button onclick="addInputFormatStandard()" class="text-blue-600 hover:text-blue-700 text-sm">
+              <i class="fas fa-plus mr-1"></i>형식 추가
+            </button>
+          </div>
+          <div class="space-y-4" id="formatStandardsList">
+            ${renderFormatStandards()}
+          </div>
+        `;
+      } else if (activeCheckItem === 'maxLength') {
+        content += `
+          <h4 class="font-medium text-gray-900">길이 제한 설정</h4>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">기본 최대 길이</label>
+              <input type="number" value="${currentConfig.rules.defaultMaxLength}" 
+                     onchange="updateCheckRule('${activeCheckItem}', 'defaultMaxLength', parseInt(this.value))"
+                     class="w-full p-2 border border-gray-300 rounded-md text-sm">
+            </div>
+            <div>
+              <label class="flex items-center">
+                <input type="checkbox" ${currentConfig.rules.checkMaxLengthAttribute ? 'checked' : ''} 
+                       onchange="updateCheckRule('${activeCheckItem}', 'checkMaxLengthAttribute', this.checked)"
+                       class="form-checkbox h-4 w-4 text-blue-600 mr-2">
+                <span class="text-sm">maxlength 속성 검사</span>
+              </label>
+            </div>
+          </div>
+          <div>
+            <h5 class="font-medium text-gray-900 mb-2">필드 유형별 길이 설정</h5>
+            <div class="space-y-2">
+              ${Object.entries(currentConfig.rules.fieldTypes).map(([fieldType, length]) => `
+                <div class="flex items-center space-x-2">
+                  <span class="w-24 text-sm font-medium text-gray-700">${fieldType}:</span>
+                  <input type="number" value="${length}" 
+                         onchange="updateFieldTypeLength('${fieldType}', parseInt(this.value))"
+                         class="w-24 p-2 border border-gray-300 rounded-md text-sm">
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else if (activeCheckItem === 'spellCheck') {
+        content += `
+          <h4 class="font-medium text-gray-900">점검 옵션</h4>
+          <div class="space-y-3">
+            <label class="flex items-center">
+              <input type="checkbox" ${currentConfig.rules.checkKoreanSpelling ? 'checked' : ''} 
+                     onchange="updateCheckRule('${activeCheckItem}', 'checkKoreanSpelling', this.checked)"
+                     class="form-checkbox h-4 w-4 text-blue-600 mr-2">
+              <span class="text-sm">한국어 맞춤법 검사</span>
+            </label>
+            <label class="flex items-center">
+              <input type="checkbox" ${currentConfig.rules.checkEnglishSpelling ? 'checked' : ''} 
+                     onchange="updateCheckRule('${activeCheckItem}', 'checkEnglishSpelling', this.checked)"
+                     class="form-checkbox h-4 w-4 text-blue-600 mr-2">
+              <span class="text-sm">영어 맞춤법 검사</span>
+            </label>
+            <label class="flex items-center">
+              <input type="checkbox" ${currentConfig.rules.checkTerminology ? 'checked' : ''} 
+                     onchange="updateCheckRule('${activeCheckItem}', 'checkTerminology', this.checked)"
+                     class="form-checkbox h-4 w-4 text-blue-600 mr-2">
+              <span class="text-sm">전문 용어 검사</span>
+            </label>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">사용자 정의 사전</label>
+            <textarea value="${currentConfig.rules.customDictionary.join('\\n')}" 
+                      onchange="updateCheckRule('${activeCheckItem}', 'customDictionary', this.value.split('\\n').filter(word => word.trim()))"
+                      placeholder="한 줄에 하나씩 단어를 입력하세요"
+                      class="w-full h-32 p-2 border border-gray-300 rounded-md text-sm">${currentConfig.rules.customDictionary.join('\\n')}</textarea>
+          </div>
+        `;
+      }
+
+      content += `
+          </div>
+        </div>
+        
+        <!-- 표준 가이드 -->
+        <div class="mt-8">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-1">표준 가이드</label>
+              <textarea value="${currentConfig.guide || ''}" 
+                        onchange="updateCheckConfig('${activeCheckItem}', 'guide', this.value)"
+                        placeholder="개발자가 참고할 수 있는 표준 가이드 내용을 입력하세요"
+                        class="w-full h-24 p-2 border border-gray-300 rounded-md text-sm">${currentConfig.guide || ''}</textarea>
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-1">참고 링크 (선택)</label>
+              <input type="url" value="${currentConfig.guideUrl || ''}" 
+                     onchange="updateCheckConfig('${activeCheckItem}', 'guideUrl', this.value)"
+                     placeholder="참고 링크 URL을 입력하세요"
+                     class="w-full p-2 border border-gray-300 rounded-md text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-1">참고 링크 대체 텍스트 (선택)</label>
+              <input type="text" value="${currentConfig.guideText || ''}" 
+                     onchange="updateCheckConfig('${activeCheckItem}', 'guideText', this.value)"
+                     placeholder="링크 대체 텍스트를 입력하세요"
+                     class="w-full p-2 border border-gray-300 rounded-md text-sm">
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = content;
+    }
+
+    function renderFormatStandards() {
+      const currentConfig = checkConfigs[activeCheckItem];
+      return currentConfig.standard.map((standard, index) => `
+        <div class="border border-gray-200 rounded-lg p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h5 class="font-medium text-gray-900">${standard.label || `형식 ${index + 1}`}</h5>
+            <button onclick="deleteInputFormatStandard(${index})" class="text-red-500 hover:text-red-700 text-sm">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4 mb-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">라벨</label>
+              <input type="text" value="${standard.label}" 
+                     onchange="updateInputFormatStandard(${index}, 'label', this.value)"
+                     class="w-full p-2 border border-gray-300 rounded-md text-sm"
+                     placeholder="예: 이메일">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">키워드 (쉼표로 구분)</label>
+              <input type="text" value="${standard.keywords.join(', ')}" 
+                     onchange="updateInputFormatStandard(${index}, 'keywords', this.value.split(',').map(k => k.trim()))"
+                     class="w-full p-2 border border-gray-300 rounded-md text-sm"
+                     placeholder="이메일, 메일, email">
+            </div>
+          </div>
+          
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">검증 규칙</label>
+            ${Object.entries(standard.rules || {}).map(([ruleKey, ruleValue]) => `
+              <div class="flex items-center space-x-2">
+                <span class="w-20 text-sm font-medium text-gray-700">${ruleKey}:</span>
+                <input type="text" value="${ruleValue}" 
+                       onchange="updateFormatRule(${index}, '${ruleKey}', this.value)"
+                       class="flex-1 p-2 border border-gray-300 rounded-md text-sm">
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateJsonPreview() {
+      const currentConfig = checkConfigs[activeCheckItem];
+      const currentCheckItem = checkItems.find(item => item.id === activeCheckItem);
+      
+      document.getElementById('jsonLabel').textContent = `JSON 설정 미리보기 - ${currentCheckItem.name}`;
+      document.getElementById('jsonPreview').textContent = JSON.stringify(currentConfig, null, 2);
+    }
+
+    function setActiveCheckItem(itemId) {
+      activeCheckItem = itemId;
+      renderCheckItemsList();
+      renderMainContent();
+      updateJsonPreview();
+    }
+
+    // Input Format 관련 함수들
+    function addInputFormatStandard() {
+      const newStandard = {
+        label: "",
+        keywords: [""],
+        rules: {}
+      };
+      checkConfigs.inputFormat.standard.push(newStandard);
+      renderMainContent();
+      updateJsonPreview();
+    }
+
+    function deleteInputFormatStandard(index) {
+      checkConfigs.inputFormat.standard.splice(index, 1);
+      renderMainContent();
+      updateJsonPreview();
+    }
+
+    function updateInputFormatStandard(index, field, value) {
+      checkConfigs.inputFormat.standard[index][field] = value;
+      updateJsonPreview();
+    }
+
+    function updateFormatRule(index, ruleKey, value) {
+      checkConfigs.inputFormat.standard[index].rules[ruleKey] = value;
+      updateJsonPreview();
+    }
+
+    function updateFieldTypeLength(fieldType, value) {
+      checkConfigs.maxLength.rules.fieldTypes[fieldType] = value;
+      updateJsonPreview();
+    }
+
+    // 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+      renderCheckItemsList();
+      renderMainContent();
+      updateJsonPreview();
+    });
   </script>
 </body>
 </html> 
